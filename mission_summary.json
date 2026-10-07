@@ -1,0 +1,78 @@
+{
+  "timber_empty": {
+    "length_km": 100.0,
+    "duration_min": 89.4,
+    "avg_speed_kmh": 67.1,
+    "avg_driving_speed_kmh": 67.5,
+    "standstill_share_pct": 0.7,
+    "stops_with_dwell": 4,
+    "total_climb_m": 697,
+    "max_grade_pct": 6.4,
+    "vehicle": "Timber truck empty",
+    "vehicle_params": {
+      "mass_kg": 20000,
+      "rot_mass_kg": 1400,
+      "CdA_m2": 10.4,
+      "p_wheel_max_kW": 355.0,
+      "cr_scale": 1.0
+    },
+    "title": "Timber truck, empty leg (mill -> forest)"
+  },
+  "timber_loaded": {
+    "length_km": 100.0,
+    "duration_min": 94.2,
+    "avg_speed_kmh": 63.7,
+    "avg_driving_speed_kmh": 64.1,
+    "standstill_share_pct": 0.6,
+    "stops_with_dwell": 4,
+    "total_climb_m": 698,
+    "max_grade_pct": 6.4,
+    "vehicle": "Timber truck loaded",
+    "vehicle_params": {
+      "mass_kg": 74000,
+      "rot_mass_kg": 1400,
+      "CdA_m2": 10.4,
+      "p_wheel_max_kW": 355.0,
+      "cr_scale": 1.0
+    },
+    "title": "Timber truck, loaded leg (forest -> mill)"
+  },
+  "urban_bus": {
+    "length_km": 100.0,
+    "duration_min": 351.3,
+    "avg_speed_kmh": 17.1,
+    "avg_driving_speed_kmh": 28.7,
+    "standstill_share_pct": 40.6,
+    "stops_with_dwell": 291,
+    "total_climb_m": 487,
+    "max_grade_pct": 2.5,
+    "vehicle": "Urban bus 12 m",
+    "vehicle_params": {
+      "mass_kg": 14700,
+      "rot_mass_kg": 600,
+      "CdA_m2": 6.5,
+      "p_wheel_max_kW": 218.6,
+      "cr_scale": 0.9497041420118343
+    },
+    "title": "Urban bus, 100 km (5 round trips of a 10 km line)"
+  },
+  "coach": {
+    "length_km": 100.0,
+    "duration_min": 76.5,
+    "avg_speed_kmh": 78.4,
+    "avg_driving_speed_kmh": 83.0,
+    "standstill_share_pct": 5.4,
+    "stops_with_dwell": 5,
+    "total_climb_m": 580,
+    "max_grade_pct": 3.8,
+    "vehicle": "Coach 13 m",
+    "vehicle_params": {
+      "mass_kg": 17200,
+      "rot_mass_kg": 700,
+      "CdA_m2": 5.0,
+      "p_wheel_max_kW": 301.7,
+      "cr_scale": 0.9497041420118343
+    },
+    "title": "Coach, 100 km intercity"
+  }
+}

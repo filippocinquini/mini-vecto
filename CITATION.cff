@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this model, please cite it as below."
+title: "mini-VECTO: backward energy-use simulator for heavy-duty diesel, HVO100, hydrogen-engine, fuel cell and battery electric vehicles"
+type: software
+authors:
+  - family-names: "Cinquini"
+    given-names: "Filippo"
+    affiliation: "Chalmers University of Technology"
+date-released: 2026-10-07
+version: "0.1.0"
+license: MIT
+repository-code: "https://github.com/filippocinquini/mini-vecto"
+abstract: "Independent student project, written as a supporting tool for coursework at Chalmers University of Technology. Distance-based 100 km mission cycles and a backward powertrain model give the fuel, hydrogen or electricity used every 10 m by a Swedish timber truck, an urban bus and a coach."

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mission Profile Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: instrument console — mission tabs, stat strip, stacked synced plots with a readout rail, then analysis panels */
+:root{
+  --bg:#f3f6f9; --surface:#ffffff; --ink:#15202b; --muted:#566575; --line:#d7dee6; --soft:#eaf0f6;
+  --accent:#1c5bcc; --accent-ink:#ffffff; --limit:#aeb9c6; --alt:#8f6214; --alt-fill:rgba(143,98,20,.14);
+  --gravel:#b07a2a; --asphalt:#5f6b78; --good:#1f7a3f; --crit:#b3261e;
+  --c-roll:#5f6b78; --c-air:#1c5bcc; --c-grade:#8f6214; --c-inert:#0b807c; --c-brake:#b3261e;
+  --f-display:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1319; --surface:#151c24; --ink:#e4ebf2; --muted:#98a6b5; --line:#28323e; --soft:#1b2430;
+  --accent:#6d9fff; --accent-ink:#0b1422; --limit:#4a5666; --alt:#d6a24f; --alt-fill:rgba(214,162,79,.16);
+  --gravel:#d6a24f; --asphalt:#8c99a8; --good:#6fd08f; --crit:#ff8a80;
+  --c-roll:#8c99a8; --c-air:#6d9fff; --c-grade:#d6a24f; --c-inert:#3cc0bb; --c-brake:#ff8a80;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1319; --surface:#151c24; --ink:#e4ebf2; --muted:#98a6b5; --line:#28323e; --soft:#1b2430;
+  --accent:#6d9fff; --accent-ink:#0b1422; --limit:#4a5666; --alt:#d6a24f; --alt-fill:rgba(214,162,79,.16);
+  --gravel:#d6a24f; --asphalt:#8c99a8; --good:#6fd08f; --crit:#ff8a80;
+  --c-roll:#8c99a8; --c-air:#6d9fff; --c-grade:#d6a24f; --c-inert:#3cc0bb; --c-brake:#ff8a80;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 56px}
+.wrap{max-width:1180px;margin-inline:auto}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700}
+h2{font-size:24px;font-weight:700}
+h3{font-size:17px;font-weight:600}
+p{margin:0;max-width:72ch}
+.eyebrow{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.09em;font-size:12px;font-weight:600;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+header{padding-block:28px 16px;display:grid;gap:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line)}
+.tab{font:inherit;font-family:var(--f-display);font-weight:600;font-size:15px;padding:7px 14px;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));border:1px solid var(--line);background:var(--surface);margin-top:14px}
+.strip div{padding:9px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;gap:1px;min-width:0}
+.strip b{font-family:var(--f-mono);font-weight:500;font-size:17px}
+.strip span{font-size:12px;color:var(--muted)}
+section{padding-block:22px 0;display:grid;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
+.plotgrid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:12px}
+@media (max-width:860px){.plotgrid{grid-template-columns:minmax(0,1fr)}}
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);border:0;border-right:1px solid var(--line);padding:5px 10px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);padding:4px 4px 0}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px}
+.readout .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.readout .row:last-child{border-bottom:0}
+.readout .k{color:var(--muted)}
+.readout .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) 56px;gap:8px;align-items:center;font-size:13px}
+.bar .track{height:14px;background:var(--soft);border-radius:2px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent)}
+.bar .val{font-family:var(--f-mono);text-align:right}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.field{display:grid;gap:3px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+.field input{font:inherit;font-family:var(--f-mono);font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);width:100%}
+.stack{display:flex;height:22px;border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.stack div{height:100%}
+.klist{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 16px;font-size:13px}
+.klist b{font-family:var(--f-mono);font-weight:500;font-size:16px;display:block}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-display);font-weight:600;font-size:13px;color:var(--muted);background:var(--soft)}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tr.cur td{background:var(--soft)}
+.err{background:var(--surface);border:1px solid var(--crit);border-radius:6px;padding:14px;color:var(--ink)}
+footer{padding-block:28px 0;font-size:13px;color:var(--muted);display:grid;gap:6px}
+code{font-family:var(--f-mono);font-size:13px;background:var(--soft);padding:1px 5px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="data/missions_data.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">mini-VECTO · mini-VECTO · distance-based mission profiles</div>
+  <h1>Mission Profile Explorer</h1>
+  <p class="muted">Every curve on this page is read from the CSV files in this folder (through <code>data/missions_data.js</code>). Drag on a plot to zoom, double-click to reset, hover to read a point.</p>
+</header>
+
+<div id="fatal" hidden class="err"><b>Data not found.</b> Run <code>python3 build_site.py</code> (or <code>python3 missions.py</code>) in this folder to create <code>data/missions_data.js</code>, then reload the page.</div>
+
+<div class="tabs" role="tablist" aria-label="Mission" id="tabs"></div>
+<div class="strip" id="strip" aria-live="polite"></div>
+
+<section>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Horizontal axis"><button type="button" id="ax-s" aria-pressed="true">Distance</button><button type="button" id="ax-t" aria-pressed="false">Time</button></div>
+    <div class="seg" role="group" aria-label="Zoom"><button type="button" id="z-all" aria-pressed="false">Whole mission</button><button type="button" id="z-10" aria-pressed="false">First 10 km</button><button type="button" id="z-2" aria-pressed="false">First 2 km</button></div>
+    <span class="note" id="zoomlabel"></span>
+  </div>
+  <div class="plotgrid">
+    <div class="panel" style="padding:8px">
+      <canvas id="cv-speed" aria-label="Speed limit and simulated speed along the mission"></canvas>
+      <div class="legend"><span><i style="background:var(--limit)"></i>Speed limit incl. curves and stops (v_target)</span><span><i style="background:var(--accent)"></i>Simulated speed (v_sim)</span><span><i style="background:var(--alt);height:10px;opacity:.5"></i>Relative altitude</span></div>
+      <canvas id="cv-grade" style="margin-top:6px" aria-label="Road grade and surface along the mission"></canvas>
+      <div class="legend"><span><i style="background:var(--ink)"></i>Grade [%]</span><span><i style="background:var(--asphalt);height:8px"></i>Asphalt</span><span><i style="background:var(--gravel);height:8px"></i>Gravel</span><span><i style="background:var(--crit);height:8px;width:3px"></i>Stop</span></div>
+    </div>
+    <div class="panel readout" aria-live="polite">
+      <div class="eyebrow" style="margin-bottom:4px">Point on the mission</div>
+      <div class="row"><span class="k">Distance</span><span class="v" id="r-s">–</span></div>
+      <div class="row"><span class="k">Elapsed time</span><span class="v" id="r-t">–</span></div>
+      <div class="row"><span class="k">Simulated speed</span><span class="v" id="r-v">–</span></div>
+      <div class="row"><span class="k">Speed limit</span><span class="v" id="r-vt">–</span></div>
+      <div class="row"><span class="k">Acceleration</span><span class="v" id="r-a">–</span></div>
+      <div class="row"><span class="k">Grade</span><span class="v" id="r-g">–</span></div>
+      <div class="row"><span class="k">Altitude (rel.)</span><span class="v" id="r-z">–</span></div>
+      <div class="row"><span class="k">Surface</span><span class="v" id="r-sf">–</span></div>
+      <div class="row"><span class="k">Road</span><span class="v" id="r-rc" style="white-space:normal">–</span></div>
+      <div class="row"><span class="k">Stop here</span><span class="v" id="r-d">–</span></div>
+      <div class="row"><span class="k">Wheel power*</span><span class="v" id="r-p">–</span></div>
+      <p class="note" style="margin-top:6px">*With the vehicle parameters in the energy panel below.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="two">
+    <div class="panel" style="display:grid;gap:10px;align-content:start">
+      <h3>Where the time goes</h3>
+      <p class="note">Share of trip time by simulated speed band, standstill at stops included.</p>
+      <div class="bars" id="bars-speed"></div>
+    </div>
+    <div class="panel" style="display:grid;gap:10px;align-content:start">
+      <h3>What the road is made of</h3>
+      <p class="note">Share of distance by road type, and the grade spread.</p>
+      <div class="bars" id="bars-road"></div>
+      <div class="klist" id="grade-stats"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="panel" style="display:grid;gap:12px">
+    <div style="display:grid;gap:4px">
+      <h3>Energy at the wheel</h3>
+      <p class="note">Work needed at the wheels along this cycle, from P = (m_eff·a + m·g·sin α + Cr·m·g·cos α + ½ρ·CdA·v²)·v. It is the same for every powertrain before driveline and converter losses; the braking energy is what an FCEV could partly recover. The speed trace stays the CSV one: changing the mass here does not re-run the driver model.</p>
+    </div>
+    <div class="form">
+      <div class="field"><label for="e-m">Mass [kg]</label><input id="e-m" type="number" step="100"></div>
+      <div class="field"><label for="e-mr">Rotating mass [kg]</label><input id="e-mr" type="number" step="50"></div>
+      <div class="field"><label for="e-cra">Cr asphalt</label><input id="e-cra" type="number" step="0.0005"></div>
+      <div class="field"><label for="e-crg">Cr gravel</label><input id="e-crg" type="number" step="0.0005"></div>
+      <div class="field"><label for="e-cda">CdA [m²]</label><input id="e-cda" type="number" step="0.1"></div>
+      <div class="field"><label for="e-aux">Auxiliaries [kW]</label><input id="e-aux" type="number" step="0.5"></div>
+    </div>
+    <div class="klist" id="e-keys" aria-live="polite"></div>
+    <div>
+      <div class="stack" id="e-stack" aria-label="Split of positive wheel work by resistance"></div>
+      <div class="legend" id="e-legend" style="padding-top:6px"></div>
+    </div>
+    <p class="note">Components are the work each resistance takes while the wheels drive (P &gt; 0). Grade work is net positive climbing; on the way down gravity helps, and the rest turns into braking. g = 9.82 m/s², ρ = 1.2 kg/m³ (Noreland). Defaults are the vehicle used to generate this mission.</p>
+  </div>
+</section>
+
+<section>
+  <h2>All four missions</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Mission</th><th class="num">Length</th><th class="num">Duration</th><th class="num">Avg speed</th><th class="num">Moving speed</th><th class="num">Standstill</th><th class="num">Stops</th><th class="num">Climb</th><th class="num">Max grade</th><th>Vehicle used for v_sim</th></tr></thead>
+    <tbody id="cmp"></tbody>
+  </table></div>
+</section>
+
+<footer>
+  <div><b>Data:</b> <code>cycle_*_distance.csv</code> (10 m step), <code>cycle_*_1Hz.csv</code>, <code>mission_summary.json</code>, packed by <code>build_site.py</code> into <code>data/missions_data.js</code>.</div>
+  <div><b>To update:</b> edit the routes or vehicles in <code>missions.py</code>, run <code>python3 missions.py</code> (it rebuilds the data file too), reload this page.</div>
+  <div><b>Sources:</b> driver acceleration and deceleration tables, Cr and CdA from Noreland, Skogforsk Arbetsrapport 1247-2025; curve speeds from Trafikverket VV 2004:80; bus stop pattern and loads compared with VECTO. Terrain and bus parameters are our assumptions.</div>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const D=window.MISSIONS_DATA;
+if(!D||!D.missions||!Object.keys(D.missions).length){ $('fatal').hidden=false; return; }
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt=(v,d=0)=>Number.isFinite(v)?v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
+const hms=s=>{ s=Math.round(s); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), x=s%60; return (h?h+' h ':'')+m+' min'+(h?'':' '+x+' s'); };
+const G=9.82, RHO=1.2, DS=10;
+
+const keys=Object.keys(D.missions);
+let cur=keys[0], axis='s', view=null, hoverI=null;
+const veh={};                     // per-mission vehicle edits
+function vehFor(k){
+  if(!veh[k]){ const p=(D.missions[k].summary||{}).vehicle_params||{};
+    veh[k]={m:p.mass_kg||40000, mr:p.rot_mass_kg||1000, cra:0.00676*(p.cr_scale||1), crg:0.0126*(p.cr_scale||1), cda:p.CdA_m2||8, aux:k.startsWith('timber')?3:(k==='urban_bus'?8:5)}; }
+  return veh[k];
+}
+
+/* ---------- tabs ---------- */
+keys.forEach(k=>{ const b=document.createElement('button'); b.type='button'; b.className='tab'; b.role='tab'; b.id='tab-'+k; b.textContent=D.missions[k].label;
+  b.addEventListener('click',()=>select(k)); $('tabs').append(b); });
+
+function M(){ return D.missions[cur]; }
+function xs(){ const m=M(); return axis==='s'? m.s.map(v=>v/1000) : m.t.map(v=>v/60); }
+function xUnit(){ return axis==='s'?'km':'min'; }
+
+/* ---------- index of the row nearest to x ---------- */
+function nearest(arr,x){ let lo=0,hi=arr.length-1; while(hi-lo>1){ const mid=(lo+hi)>>1; if(arr[mid]<x) lo=mid; else hi=mid; } return (x-arr[lo]<arr[hi]-x)?lo:hi; }
+
+/* ---------- canvas plotting ---------- */
+function setupCanvas(cv,h){ const dpr=window.devicePixelRatio||1, W=cv.clientWidth; cv.style.height=h+'px'; cv.width=Math.round(W*dpr); cv.height=Math.round(h*dpr); const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); return {c,W,H:h}; }
+const PAD={l:48,r:48,t:10,b:26};
+function niceTicks(a,b,n){ const span=b-a; if(span<=0) return [a]; const step0=span/n, p=Math.pow(10,Math.floor(Math.log10(step0))), e=step0/p; const step=(e<1.5?1:e<3?2:e<7?5:10)*p; const out=[]; for(let v=Math.ceil(a/step)*step; v<=b+1e-9; v+=step) out.push(+v.toFixed(10)); return out; }
+
+function geom(W,H,x0,x1,y0,y1){ const pw=W-PAD.l-PAD.r, ph=H-PAD.t-PAD.b; return {pw,ph, X:x=>PAD.l+(x-x0)/(x1-x0)*pw, Y:y=>PAD.t+ph-(y-y0)/(y1-y0)*ph}; }
+
+function visibleRange(x){ const x0=view?view[0]:x[0], x1=view?view[1]:x[x.length-1]; let i0=nearest(x,x0), i1=nearest(x,x1); if(i0>0) i0--; if(i1<x.length-1) i1++; return {x0,x1,i0,i1}; }
+
+function pathLine(c,x,y,i0,i1,X,Y,pw){ // min/max decimation per pixel column
+  const n=i1-i0+1, perPx=n/pw; c.beginPath();
+  if(perPx<=2){ for(let i=i0;i<=i1;i++){ const px=X(x[i]), py=Y(y[i]); i===i0?c.moveTo(px,py):c.lineTo(px,py);} return; }
+  let col=-1, mn=0, mx=0, first=true;
+  for(let i=i0;i<=i1;i++){ const px=Math.floor(X(x[i])); if(px!==col){ if(col>=0){ if(first){c.moveTo(col,Y(mn));first=false;} c.lineTo(col,Y(mn)); c.lineTo(col,Y(mx)); } col=px; mn=y[i]; mx=y[i]; } else { if(y[i]<mn) mn=y[i]; if(y[i]>mx) mx=y[i]; } }
+  if(col>=0){ c.lineTo(col,Y(mn)); c.lineTo(col,Y(mx)); }
+}
+
+function axes(c,W,H,x0,x1,y0,y1,g,yLabel,y2){
+  const muted=css('--muted'), line=css('--line');
+  c.strokeStyle=line; c.lineWidth=1; c.fillStyle=muted; c.font='11px "IBM Plex Mono", monospace';
+  c.textAlign='right'; c.textBaseline='middle';
+  niceTicks(y0,y1,4).forEach(t=>{ c.globalAlpha=0.6; c.beginPath(); c.moveTo(PAD.l,g.Y(t)); c.lineTo(W-PAD.r,g.Y(t)); c.stroke(); c.globalAlpha=1; c.fillText(t,PAD.l-6,g.Y(t)); });
+  c.textAlign='center'; c.textBaseline='top';
+  niceTicks(x0,x1,8).forEach(t=>c.fillText(t,g.X(t),H-PAD.b+6));
+  c.save(); c.translate(12,PAD.t+g.ph/2); c.rotate(-Math.PI/2); c.textAlign='center'; c.textBaseline='middle'; c.font='11px "IBM Plex Sans", sans-serif'; c.fillText(yLabel,0,0); c.restore();
+  if(y2){ c.save(); c.translate(W-10,PAD.t+g.ph/2); c.rotate(Math.PI/2); c.textAlign='center'; c.textBaseline='middle'; c.font='11px "IBM Plex Sans", sans-serif'; c.fillStyle=css('--alt'); c.fillText(y2,0,0); c.restore(); }
+  c.strokeStyle=line; c.strokeRect(PAD.l,PAD.t,g.pw,g.ph);
+}
+
+function drawSpeed(){
+  const cv=$('cv-speed'), {c,W,H}=setupCanvas(cv,Math.round(Math.max(240,Math.min(380,cv.clientWidth*0.42))));
+  c.fillStyle=css('--surface'); c.fillRect(0,0,W,H);
+  const m=M(), x=xs(), {x0,x1,i0,i1}=visibleRange(x);
+  let vmax=0; for(let i=i0;i<=i1;i++) vmax=Math.max(vmax,m.vt[i]>150?0:m.vt[i],m.v[i]);
+  const y1=Math.max(40,Math.ceil((vmax+5)/10)*10), g=geom(W,H,x0,x1,0,y1);
+  // altitude area on its own scale
+  let zmin=Infinity,zmax=-Infinity; for(let i=i0;i<=i1;i++){ zmin=Math.min(zmin,m.z[i]); zmax=Math.max(zmax,m.z[i]); }
+  const zr=Math.max(5,zmax-zmin), Z=z=>PAD.t+g.ph-((z-zmin)/zr)*g.ph*0.55;
+  c.save(); c.beginPath(); c.rect(PAD.l,PAD.t,g.pw,g.ph); c.clip();
+  c.fillStyle=css('--alt-fill'); c.beginPath(); c.moveTo(g.X(x[i0]),PAD.t+g.ph);
+  const step=Math.max(1,Math.floor((i1-i0)/g.pw)); for(let i=i0;i<=i1;i+=step) c.lineTo(g.X(x[i]),Z(m.z[i])); c.lineTo(g.X(x[i1]),Z(m.z[i1])); c.lineTo(g.X(x[i1]),PAD.t+g.ph); c.closePath(); c.fill();
+  const vt=m.vt.map(v=>v>150?y1:v);
+  c.strokeStyle=css('--limit'); c.lineWidth=1.2; pathLine(c,x,vt,i0,i1,g.X,g.Y,g.pw); c.stroke();
+  c.strokeStyle=css('--accent'); c.lineWidth=1.8; pathLine(c,x,m.v,i0,i1,g.X,g.Y,g.pw); c.stroke();
+  c.restore();
+  axes(c,W,H,x0,x1,0,y1,g,'Speed [km/h]','Altitude (relative)');
+  c.fillStyle=css('--muted'); c.font='11px "IBM Plex Sans", sans-serif'; c.textAlign='right'; c.textBaseline='top'; c.fillText(`${fmt(zr,0)} m altitude range in view`,W-PAD.r-4,PAD.t+4);
+  if(hoverI!=null&&hoverI>=i0&&hoverI<=i1) crosshair(c,g,x[hoverI],m.v[hoverI],H);
+  drawSpeed.g={g,x0,x1};
+}
+function drawGrade(){
+  const cv=$('cv-grade'), {c,W,H}=setupCanvas(cv,150);
+  c.fillStyle=css('--surface'); c.fillRect(0,0,W,H);
+  const m=M(), x=xs(), {x0,x1,i0,i1}=visibleRange(x);
+  let gm=1; for(let i=i0;i<=i1;i++) gm=Math.max(gm,Math.abs(m.g[i]));
+  gm=Math.ceil(gm); const g=geom(W,H,x0,x1,-gm,gm);
+  c.save(); c.beginPath(); c.rect(PAD.l,PAD.t,g.pw,g.ph); c.clip();
+  // surface band along the bottom
+  const gi=m.surf_names.indexOf('gravel');
+  for(let i=i0;i<i1;i++){ c.fillStyle=m.surf[i]===gi?css('--gravel'):css('--asphalt'); c.globalAlpha=0.35; c.fillRect(g.X(x[i]),PAD.t+g.ph-8,Math.max(1,g.X(x[i+1])-g.X(x[i])+0.5),8); }
+  c.globalAlpha=1;
+  // stops
+  c.fillStyle=css('--crit'); for(let i=i0;i<=i1;i++) if(m.dwell[i]>0) c.fillRect(g.X(x[i])-1,PAD.t,2,g.ph-8);
+  c.strokeStyle=css('--muted'); c.globalAlpha=0.6; c.beginPath(); c.moveTo(PAD.l,g.Y(0)); c.lineTo(W-PAD.r,g.Y(0)); c.stroke(); c.globalAlpha=1;
+  c.strokeStyle=css('--ink'); c.lineWidth=1.2; pathLine(c,x,m.g,i0,i1,g.X,g.Y,g.pw); c.stroke();
+  c.restore();
+  axes(c,W,H,x0,x1,-gm,gm,g,'Grade [%]');
+  if(hoverI!=null&&hoverI>=i0&&hoverI<=i1) crosshair(c,g,x[hoverI],m.g[hoverI],H);
+  drawGrade.g={g};
+}
+function crosshair(c,g,xv,yv,H){ c.strokeStyle=css('--ink'); c.globalAlpha=0.5; c.lineWidth=1; c.beginPath(); c.moveTo(g.X(xv),PAD.t); c.lineTo(g.X(xv),PAD.t+g.ph); c.stroke(); c.globalAlpha=1;
+  c.fillStyle=css('--surface'); c.strokeStyle=css('--ink'); c.beginPath(); c.arc(g.X(xv),g.Y(yv),4,0,Math.PI*2); c.fill(); c.stroke(); }
+
+/* ---------- hover + zoom interactions ---------- */
+let drag=null;
+function xFromEvent(cv,ev,g){ const r=cv.getBoundingClientRect(); const px=Math.min(Math.max(ev.clientX-r.left,PAD.l),PAD.l+g.pw); const x=xs(); const {x0,x1}=visibleRange(x); return x0+(px-PAD.l)/g.pw*(x1-x0); }
+['cv-speed','cv-grade'].forEach(id=>{
+  const cv=$(id);
+  cv.addEventListener('pointermove',ev=>{ const G_= (id==='cv-speed'?drawSpeed.g:drawGrade.g); if(!G_) return; const xv=xFromEvent(cv,ev,G_.g); hoverI=nearest(xs(),xv); if(drag){ drag.x1=xv; } readout(); draw(); if(drag) shade(cv,G_.g); });
+  cv.addEventListener('pointerdown',ev=>{ const G_=(id==='cv-speed'?drawSpeed.g:drawGrade.g); if(!G_) return; cv.setPointerCapture(ev.pointerId); const xv=xFromEvent(cv,ev,G_.g); drag={x0:xv,x1:xv,cv}; });
+  cv.addEventListener('pointerup',()=>{ if(drag){ const a=Math.min(drag.x0,drag.x1), b=Math.max(drag.x0,drag.x1); const x=xs(); if(b-a>(x[x.length-1]-x[0])/2000){ view=[a,b]; setZoomButtons(null);} drag=null; draw(); } });
+  cv.addEventListener('dblclick',()=>{ view=null; setZoomButtons('z-all'); draw(); });
+  cv.addEventListener('pointerleave',()=>{ if(!drag){ hoverI=null; readout(); draw(); } });
+});
+function shade(cv,g){ const c=cv.getContext('2d'); const x=xs(); const {x0,x1}=visibleRange(x); const X=v=>PAD.l+(v-x0)/(x1-x0)*g.pw; c.fillStyle=css('--accent'); c.globalAlpha=0.12; c.fillRect(Math.min(X(drag.x0),X(drag.x1)),PAD.t,Math.abs(X(drag.x1)-X(drag.x0)),g.ph); c.globalAlpha=1; }
+function setZoomButtons(id){ ['z-all','z-10','z-2'].forEach(b=>$(b).setAttribute('aria-pressed',b===id?'true':'false')); }
+$('z-all').addEventListener('click',()=>{ view=null; setZoomButtons('z-all'); draw(); });
+$('z-10').addEventListener('click',()=>{ zoomDist(10,'z-10'); });
+$('z-2').addEventListener('click',()=>{ zoomDist(2,'z-2'); });
+function zoomDist(km,id){ const m=M(); const i=nearest(m.s,km*1000); view = axis==='s'? [0,km] : [0,m.t[i]/60]; setZoomButtons(id); draw(); }
+function setAxis(a){ const x0=xs(); let range=view? [nearest(x0,view[0]),nearest(x0,view[1])]:null; axis=a; $('ax-s').setAttribute('aria-pressed',a==='s'?'true':'false'); $('ax-t').setAttribute('aria-pressed',a==='t'?'true':'false'); if(range){ const x=xs(); view=[x[range[0]],x[range[1]]]; } draw(); }
+$('ax-s').addEventListener('click',()=>setAxis('s')); $('ax-t').addEventListener('click',()=>setAxis('t'));
+
+/* ---------- wheel power & energy ---------- */
+function wheelPower(i){ // W, at row i, using forward difference acceleration
+  const m=M(), p=vehFor(cur), v=m.v[i]/3.6, a=m.a[i], al=Math.atan(m.g[i]/100), gi=m.surf_names.indexOf('gravel'); const cr=m.surf[i]===gi?p.crg:p.cra;
+  const Fi=(p.m+p.mr)*a, Fg=p.m*G*Math.sin(al), Fr=cr*p.m*G*Math.cos(al), Fa=0.5*RHO*p.cda*v*v;
+  return {P:(Fi+Fg+Fr+Fa)*v, Fi,Fg,Fr,Fa};
+}
+function energy(){
+  const m=M(), p=vehFor(cur), n=m.s.length, gi=m.surf_names.indexOf('gravel');
+  let Epos=0,Eneg=0,Er=0,Ea=0,Eg=0,Ei=0;
+  for(let i=0;i<n-1;i++){
+    const v=0.5*(m.v[i]+m.v[i+1])/3.6; if(v<0.05) continue;
+    const a=(m.v[i+1]**2-m.v[i]**2)/3.6/3.6/(2*DS), al=Math.atan(m.g[i]/100), cr=m.surf[i]===gi?p.crg:p.cra;
+    const Fi=(p.m+p.mr)*a, Fg=p.m*G*Math.sin(al), Fr=cr*p.m*G*Math.cos(al), Fa=0.5*RHO*p.cda*v*v, F=Fi+Fg+Fr+Fa;
+    const W=F*DS;
+    if(F>0){ Epos+=W; Er+=Fr*DS; Ea+=Fa*DS; Eg+=Math.max(0,Fg)*DS; Ei+=Math.max(0,Fi)*DS; } else Eneg+=-W;
+  }
+  const km=(m.s[n-1]-m.s[0])/1000, T=m.t[n-1], toKWh=j=>j/3.6e6;
+  const aux=p.aux*T/3600; // kWh over the trip
+  return {km, pos:toKWh(Epos)/km, neg:toKWh(Eneg)/km, r:toKWh(Er), a:toKWh(Ea), g:toKWh(Eg), i:toKWh(Ei), aux:aux/km, T};
+}
+function drawEnergy(){
+  const e=energy();
+  $('e-keys').innerHTML=`
+    <div><b>${fmt(e.pos,2)} kWh/km</b>Positive wheel work</div>
+    <div><b>${fmt(e.neg,2)} kWh/km</b>Braking energy (recoverable in part)</div>
+    <div><b>${fmt(e.aux,2)} kWh/km</b>Auxiliaries over the trip</div>
+    <div><b>${fmt(e.pos*e.km,0)} kWh</b>Wheel work, whole ${fmt(e.km,0)} km</div>
+    <div><b>${fmt(e.neg/e.pos*100,0)} %</b>Braking vs driving work</div>`;
+  const parts=[['Rolling',e.r,'--c-roll'],['Air',e.a,'--c-air'],['Climbing',e.g,'--c-grade'],['Acceleration',e.i,'--c-inert']];
+  const tot=parts.reduce((s,p)=>s+p[1],0)||1;
+  $('e-stack').replaceChildren(...parts.map(p=>{ const d=document.createElement('div'); d.style.width=(p[1]/tot*100)+'%'; d.style.background=`var(${p[2]})`; d.title=`${p[0]}: ${fmt(p[1]/tot*100,0)} %`; return d; }));
+  $('e-legend').innerHTML=parts.map(p=>`<span><span class="sw" style="background:var(${p[2]})"></span>${p[0]} ${fmt(p[1]/tot*100,0)} %</span>`).join('');
+}
+['e-m','e-mr','e-cra','e-crg','e-cda','e-aux'].forEach(id=>$(id).addEventListener('input',()=>{ const p=vehFor(cur);
+  const map={'e-m':'m','e-mr':'mr','e-cra':'cra','e-crg':'crg','e-cda':'cda','e-aux':'aux'}; const v=parseFloat($(id).value); if(Number.isFinite(v)) p[map[id]]=v; drawEnergy(); readout(); }));
+function fillVehForm(){ const p=vehFor(cur); $('e-m').value=p.m; $('e-mr').value=p.mr; $('e-cra').value=+p.cra.toFixed(5); $('e-crg').value=+p.crg.toFixed(5); $('e-cda').value=p.cda; $('e-aux').value=p.aux; }
+
+/* ---------- readout ---------- */
+function readout(){
+  const m=M(), i=hoverI;
+  if(i==null){ ['r-s','r-t','r-v','r-vt','r-a','r-g','r-z','r-sf','r-rc','r-d','r-p'].forEach(id=>$(id).textContent='–'); return; }
+  $('r-s').textContent=fmt(m.s[i]/1000,2)+' km'; $('r-t').textContent=hms(m.t[i]);
+  $('r-v').textContent=fmt(m.v[i],1)+' km/h'; $('r-vt').textContent=m.vt[i]>150?'none':fmt(m.vt[i],0)+' km/h';
+  $('r-a').textContent=fmt(m.a[i],2)+' m/s²'; $('r-g').textContent=fmt(m.g[i],2)+' %'; $('r-z').textContent=fmt(m.z[i],1)+' m';
+  $('r-sf').textContent=m.surf_names[m.surf[i]]; $('r-rc').textContent=m.rc_names[m.rc[i]]; $('r-d').textContent=m.dwell[i]>0?fmt(m.dwell[i],0)+' s':'no';
+  const w=wheelPower(i); $('r-p').textContent=fmt(w.P/1e3,0)+' kW';
+}
+
+/* ---------- distributions ---------- */
+function barRows(el,rows,color){ el.replaceChildren(...rows.map(([k,v])=>{ const d=document.createElement('div'); d.className='bar';
+  d.innerHTML=`<span>${k}</span><div class="track"><div class="fill" style="width:${Math.max(0,v)*100}%;background:${color||'var(--accent)'}"></div></div><span class="val">${fmt(v*100,0)} %</span>`; return d; })); }
+function drawDistributions(){
+  const m=M(), n=m.s.length; const bands=[[0,0.5,'Stopped'],[0.5,20,'0–20 km/h'],[20,40,'20–40'],[40,60,'40–60'],[60,80,'60–80'],[80,999,'80+']];
+  const t=new Array(bands.length).fill(0); let T=0;
+  for(let i=0;i<n-1;i++){ const dt=m.t[i+1]-m.t[i]; const dwell=m.dwell[i]; const drive=Math.max(0,dt-dwell); const v=0.5*(m.v[i]+m.v[i+1]);
+    t[0]+=dwell; const b=bands.findIndex(([lo,hi],k)=>k>0&&v>=lo&&v<hi); t[b<0?0:b]+=drive; T+=dt; }
+  barRows($('bars-speed'),bands.map((b,k)=>[b[2],t[k]/(T||1)]));
+  const cnt={}; m.rc.forEach(r=>{cnt[r]=(cnt[r]||0)+1;});
+  const rows=Object.keys(cnt).map(k=>[m.rc_names[k].replace(/ \(class.*\)/,''),cnt[k]/n]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  barRows($('bars-road'),rows,'var(--alt)');
+  let up=0,down=0,steep=0; for(let i=0;i<n;i++){ if(m.g[i]>0.5) up++; else if(m.g[i]<-0.5) down++; if(Math.abs(m.g[i])>=3) steep++; }
+  const sm=m.summary||{};
+  $('grade-stats').innerHTML=`<div><b>${fmt(up/n*100,0)} %</b>Uphill (&gt;0.5 %)</div><div><b>${fmt(down/n*100,0)} %</b>Downhill</div><div><b>${fmt(steep/n*100,0)} %</b>Steeper than 3 %</div><div><b>${fmt(sm.total_climb_m,0)} m</b>Total climb</div>`;
+}
+
+/* ---------- stat strip + comparison ---------- */
+function drawStrip(){ const s=M().summary||{};
+  $('strip').innerHTML=`<div><b>${fmt(s.length_km,0)} km</b><span>Length</span></div><div><b>${fmt(s.duration_min,0)} min</b><span>Duration</span></div><div><b>${fmt(s.avg_speed_kmh,1)} km/h</b><span>Average speed</span></div><div><b>${fmt(s.avg_driving_speed_kmh,1)} km/h</b><span>Average moving speed</span></div><div><b>${fmt(s.standstill_share_pct,1)} %</b><span>Time standing still</span></div><div><b>${fmt(s.stops_with_dwell,0)}</b><span>Stops</span></div><div><b>${fmt(s.total_climb_m,0)} m</b><span>Total climb</span></div><div><b>${fmt(s.max_grade_pct,1)} %</b><span>Max grade</span></div>`; }
+function drawCompare(){ $('cmp').replaceChildren(...keys.map(k=>{ const s=D.missions[k].summary||{}, tr=document.createElement('tr'); if(k===cur) tr.className='cur';
+  tr.innerHTML=`<td>${D.missions[k].label}</td><td class="num">${fmt(s.length_km,0)} km</td><td class="num">${fmt(s.duration_min,0)} min</td><td class="num">${fmt(s.avg_speed_kmh,1)} km/h</td><td class="num">${fmt(s.avg_driving_speed_kmh,1)} km/h</td><td class="num">${fmt(s.standstill_share_pct,1)} %</td><td class="num">${fmt(s.stops_with_dwell,0)}</td><td class="num">${fmt(s.total_climb_m,0)} m</td><td class="num">${fmt(s.max_grade_pct,1)} %</td><td>${s.vehicle||'–'}</td>`; return tr; })); }
+
+/* ---------- orchestration ---------- */
+function draw(){ drawSpeed(); drawGrade();
+  const x=xs(); const {x0,x1}=visibleRange(x); $('zoomlabel').textContent=`Showing ${fmt(x0,2)}–${fmt(x1,2)} ${xUnit()} · drag to zoom, double-click to reset`; }
+function select(k){ cur=k; view=null; hoverI=null; setZoomButtons('z-all');
+  keys.forEach(q=>$('tab-'+q).setAttribute('aria-selected',q===k?'true':'false'));
+  fillVehForm(); drawStrip(); drawDistributions(); drawEnergy(); drawCompare(); readout(); draw(); }
+select(cur);
+let rt; new ResizeObserver(()=>{ clearTimeout(rt); rt=setTimeout(draw,60); }).observe($('cv-speed'));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+})();
+</script>
+</body>
+</html>
