@@ -1,294 +1,547 @@
 {
- "_comment": "Main vehicle data for powertrain.py. Values marked ASSUMPTION in 'notes' are ours: confirm with manufacturer data.",
- "fuels": {
-  "diesel": {
-   "LHV_MJ_per_kg": 42.7,
-   "density_kg_per_l": 0.835
-  },
-  "hvo100": {
-   "LHV_MJ_per_kg": 44.0,
-   "density_kg_per_l": 0.78
-  },
-  "h2": {
-   "LHV_MJ_per_kg": 120.0
-  }
- },
- "gearboxes": {
-  "ishift_direct": {
-   "source": "Volvo I-Shift 12-speed, direct-drive version (volgenpower.com)",
-   "ratios": [
-    12.8,
-    9.95,
-    7.91,
-    6.29,
-    5.06,
-    4.04,
-    3.23,
-    2.58,
-    2.06,
-    1.65,
-    1.3,
-    1.0
-   ],
-   "eta_indirect": 0.96,
-   "eta_direct": 0.98
-  },
-  "ishift_overdrive": {
-   "source": "Volvo I-Shift 12-speed, overdrive version (volgenpower.com). NOTE: 11th->12th step (1.51->0.78) looks odd, check",
-   "ratios": [
-    14.94,
-    11.61,
-    9.22,
-    7.34,
-    5.9,
-    4.71,
-    3.77,
-    3.01,
-    2.4,
-    1.92,
-    1.51,
-    0.78
-   ],
-   "eta_indirect": 0.96,
-   "eta_direct": 0.98
-  }
- },
- "vehicles": {
-  "timber_truck": {
-   "engine": {
-    "displacement_l": 12.8,
-    "rated_power_kW": 397,
-    "n_idle_rpm": 600,
-    "n_min_drive_rpm": 900,
-    "n_max_rpm": 1900,
-    "n_launch_rpm": 800
-   },
-   "gearbox": "ishift_direct",
-   "axle_ratio": 3.1,
-   "eta_axle": 0.97,
-   "tyre_dynamic_radius_m": 0.5,
-   "aux_mech_kW": 4.0,
-   "notes": "Engine: Volvo D13K540 fact sheet. ASSUMPTIONS: axle ratio 3.10 and tyre radius 0.50 m (315/80R22.5) chosen so that 80 km/h in 12th gear = ~1320 rpm (Volvo economy band 950-1400); gearbox/axle efficiencies typical values; aux 4 kW from VECTO standard values (fan, steering, electric, pneumatic, AC). Crane PTO not in the driving cycle."
-  },
-  "urban_bus": {
-   "engine": {
-    "displacement_l": 8.1,
-    "rated_power_kW": 250,
-    "n_idle_rpm": 600,
-    "n_min_drive_rpm": 900,
-    "n_max_rpm": 1900,
-    "n_launch_rpm": 800
-   },
-   "gearbox": "ishift_direct",
-   "axle_ratio": 4.7,
-   "eta_axle": 0.97,
-   "tyre_dynamic_radius_m": 0.48,
-   "aux_mech_kW": 8.0,
-   "notes": "ASSUMPTIONS: 250 kW engine = the D13 map scaled by power (same BMEP map); city buses often use torque-converter automatics, I-Shift ratios used as a simplification; axle 4.70 so 50 km/h in 12th = ~1300 rpm; aux 8 kW incl. HVAC (JRC range). "
-  },
-  "coach": {
-   "engine": {
-    "displacement_l": 11.0,
-    "rated_power_kW": 340,
-    "n_idle_rpm": 600,
-    "n_min_drive_rpm": 900,
-    "n_max_rpm": 1900,
-    "n_launch_rpm": 800
-   },
-   "gearbox": "ishift_direct",
-   "axle_ratio": 2.3,
-   "eta_axle": 0.97,
-   "tyre_dynamic_radius_m": 0.5,
-   "aux_mech_kW": 6.0,
-   "notes": "ASSUMPTIONS: 340 kW engine = D13 map scaled by power; axle 2.30 so 100 km/h in 12th = ~1220 rpm; aux 6 kW."
-  }
- },
- "missions": {
-  "timber_empty": {
-   "vehicle": "timber_truck",
-   "mass_kg": 20000,
-   "rot_mass_kg": 1400,
-   "CdA_m2": 10.4,
-   "cr_asphalt": 0.00676,
-   "cr_gravel": 0.0126
-  },
-  "timber_loaded": {
-   "vehicle": "timber_truck",
-   "mass_kg": 74000,
-   "rot_mass_kg": 1400,
-   "CdA_m2": 10.4,
-   "cr_asphalt": 0.00676,
-   "cr_gravel": 0.0126
-  },
-  "urban_bus": {
-   "vehicle": "urban_bus",
-   "mass_kg": 14700,
-   "rot_mass_kg": 600,
-   "CdA_m2": 6.5,
-   "cr_asphalt": 0.00642,
-   "cr_gravel": 0.012
-  },
-  "coach": {
-   "vehicle": "coach",
-   "mass_kg": 17200,
-   "rot_mass_kg": 700,
-   "CdA_m2": 5.0,
-   "cr_asphalt": 0.00642,
-   "cr_gravel": 0.012
-  }
- },
- "hpdi": {
-  "pilot_share_full_load": 0.025,
-  "pilot_fuel": "hvo100",
-  "note": "AVL: 97.5 % H2 energy at full load. ASSUMPTION: constant pilot energy per cycle at a given speed."
- },
- "electric": {
-  "_comment": "Data for electric.py (FCEV and BEV). S = sourced, D = derived from sources, A = assumption, to be confirmed with manufacturer data. Same vehicle masses as the diesel case (mass penalty of battery / tanks not yet included: A). extra_mass_kg (per vehicle, for bev and fcev) adds mass on top of the mission mass, e.g. battery or hydrogen tanks minus the removed diesel powertrain; 0 until Volvo gives component masses.",
-  "edrive": {
-   "machine_peak_efficiency": 0.965,
-   "machine_loss_shape": {
-    "c0": 0.0015,
-    "k_cu": 0.028,
-    "k_fe": 0.0025,
-    "k_fw": 0.00015
-   },
-   "inverter_loss": {
-    "a0": 0.002,
-    "a1": 0.006,
-    "a2": 0.006
-   },
-   "const_power_speed_ratio": 3.0,
-   "eta_gear": 0.97,
-   "gear_step": 1.8,
-   "regen_v_cut_kmh": 7.0,
-   "regen_adhesion_use": 0.2,
-   "note": "Loss model per unit of motor peak power: p_loss = c0 + k_cu t^2 + k_fe w^1.5 + k_fw w^3 (t = torque/T_max, w = speed/base speed), shape scaled so the machine peak efficiency is 96.5 % (S: Grunditz & Thiringer 2017, Chalmers, reference PMSMs 96.4-97.1 %). Inverter coefficients, constant-power speed ratio, gear step, gear efficiency (97 % is the Grunditz single-speed value), regen cut-off speed and regen limit (0.20 g on the driven-axle load) are A."
-  },
-  "battery": {
-   "loss_at_1C": 0.03,
-   "charger_efficiency": 0.9,
-   "depot_charge_C_rate": 0.6,
-   "note": "Internal-resistance model with constant voltage: loss = loss_at_1C * P^2 / P_1C (A, ECM parameters not available). Charger efficiency 90 % (S: Skogforsk Arbetsrapport 1176-2023)."
-  },
-  "fuel_cell": {
-   "load_frac": [
-    0.05,
-    0.1,
-    0.25,
-    0.5,
-    0.75,
-    1.0
-   ],
-   "eta_sys_BOL": [
-    0.5,
-    0.6,
-    0.645,
-    0.61,
-    0.585,
-    0.56
-   ],
-   "eta_sys_EOL": [
-    0.4,
-    0.46,
-    0.5,
-    0.48,
-    0.46,
-    0.44
-   ],
-   "min_load_frac": 0.1,
-   "ramp_frac_per_s": 0.1,
-   "purge_share_of_h2": 0.005,
-   "dcdc_loss": {
-    "p0": 0.003,
-    "k1": 0.012,
-    "k2": 0.008
-   },
-   "ems": {
-    "filter_tau_s": 60,
-    "soc_ref": 0.55,
-    "soc_gain_band": 0.15,
-    "soc_min": 0.3,
-    "soc_max": 0.8
-   },
-   "note": "System efficiency (LHV) at 25 % and 100 % load BOL: S (DOE Program Record 26002, 2026); EOL at 25 % and 100 %: S (Wang & Ahluwalia, Argonne, 2025: 48-51 % peak, 40-48 % rated); other points interpolated (A). Purge and crossover are inside the efficiency; purge share 0.5 % (assumption) is reported separately only for the H2-emission inventory. Minimum load, ramp rate, DC/DC curve and EMS settings are A (not available from public sources)."
-  },
-  "vehicles": {
-   "timber_truck": {
-    "motor_peak_kW": 490,
-    "n_gears": 4,
-    "v_top_kmh": 95,
-    "aux_el_kW": 4.0,
-    "driven_axle_load_share": {
-     "timber_empty": 0.45,
-     "timber_loaded": 0.26
+    "_comment": "Main vehicle data for powertrain.py. Values marked ASSUMPTION in 'notes' are ours: confirm with manufacturer data.",
+    "fuels": {
+        "diesel": {
+            "LHV_MJ_per_kg": 42.7,
+            "density_kg_per_l": 0.835
+        },
+        "hvo100": {
+            "LHV_MJ_per_kg": 44.0,
+            "density_kg_per_l": 0.78
+        },
+        "h2": {
+            "LHV_MJ_per_kg": 120.0
+        }
     },
-    "bev": {
-     "battery_kWh": 590,
-     "soc_start": 0.9,
-     "soc_min": 0.05,
-     "C_discharge": 1.0,
-     "C_charge": 1.0,
-     "extra_mass_kg": 0
+    "engine_map": {
+        "source": "measured",
+        "file": "data/engine_map_measured.csv",
+        "test_fuel_LHV_MJ_per_kg": 42.7,
+        "note": "source = 'measured' or 'model'. measured: steady-state test-bench map of a 13 L heavy-duty diesel engine (176 points, 2650 Nm, 405 kW, best BSFC 191 g/kWh = 44 %), provided by AB Volvo for the TRA545 course project; data/engine_map_measured.csv (written by import_engine_map.py from the Excel file). model: semi-empirical map scaled to a 50 % peak (assumption). If the measured file is missing the model map is used. ASSUMPTIONS with the measured map: test fuel LHV 42.7 MJ/kg (not stated in the file); same map for HVO100 and for the hydrogen engine (equal efficiency); buses use the map at equal BMEP, scaled by displacement; full-load curve still from the D13K540 fact sheet."
     },
-    "fcev": {
-     "fc_net_kW": 300,
-     "battery_kWh": 70,
-     "C_discharge": 5.0,
-     "C_charge": 3.0,
-     "extra_mass_kg": 0
+    "gearboxes": {
+        "ishift_direct": {
+            "source": "Volvo I-Shift 12-speed, direct-drive version (volgenpower.com)",
+            "ratios": [
+                12.8,
+                9.95,
+                7.91,
+                6.29,
+                5.06,
+                4.04,
+                3.23,
+                2.58,
+                2.06,
+                1.65,
+                1.3,
+                1.0
+            ],
+            "eta_indirect": 0.96,
+            "eta_direct": 0.98
+        },
+        "ishift_overdrive": {
+            "source": "Volvo I-Shift 12-speed, overdrive version (volgenpower.com). NOTE: 11th->12th step (1.51->0.78) looks odd, check",
+            "ratios": [
+                14.94,
+                11.61,
+                9.22,
+                7.34,
+                5.9,
+                4.71,
+                3.77,
+                3.01,
+                2.4,
+                1.92,
+                1.51,
+                0.78
+            ],
+            "eta_indirect": 0.96,
+            "eta_direct": 0.98
+        }
     },
-    "note": "Motor 490 kW peak (S: Volvo FH Electric). FC 2 x 150 kW (S: Volvo/cellcentric test trucks). Buffer battery 70 kWh, 400 kW peak (S: Mercedes GenH2). BEV battery 590 kWh installed (D: Skogforsk 2.5/1.5 kWh/km, 200 km round trip, 85 % window, 20 % reserve). 4 gears like the eActros 600 e-axle (S), ratios A. Driven-axle load share A."
-   },
-   "urban_bus": {
-    "motor_peak_kW": 250,
-    "n_gears": 2,
-    "v_top_kmh": 85,
-    "aux_el_kW": 8.0,
-    "driven_axle_load_share": {
-     "urban_bus": 0.65
+    "vehicles": {
+        "timber_truck": {
+            "engine": {
+                "displacement_l": 12.8,
+                "rated_power_kW": 397,
+                "n_idle_rpm": 600,
+                "n_min_drive_rpm": 900,
+                "n_max_rpm": 1900,
+                "n_launch_rpm": 800
+            },
+            "gearbox": "ishift_direct",
+            "axle_ratio": 3.1,
+            "eta_axle": 0.97,
+            "tyre_dynamic_radius_m": 0.5,
+            "aux_mech_kW": 4.0,
+            "notes": "Engine: Volvo D13K540 fact sheet. ASSUMPTIONS: axle ratio 3.10 and tyre radius 0.50 m (315/80R22.5) chosen so that 80 km/h in 12th gear = ~1320 rpm (Volvo economy band 950-1400); gearbox/axle efficiencies typical values; aux 4 kW from VECTO standard values (fan, steering, electric, pneumatic, AC). Crane PTO not in the driving cycle.",
+            "h2ice_mass": {
+                "mass_breakdown_kg": {
+                    "h2_system_700bar_40kg_at_4.32wt% [D: DOE_SA_700BAR]": 926,
+                    "engine_mass_difference [A: about 0, MAN_HTGX shares ~80 % of components]": 0,
+                    "minus_diesel_450L [A]": -376
+                },
+                "extra_mass_kg": 550,
+                "mass_range_kg": [
+                    200,
+                    1090
+                ],
+                "mass_note": "Model H2 use ~31 kg per 200 km round trip (9.2 + 21.6 kg); 40 kg usable (A); MAN hTGX carries 56 kg (S: MAN_HTGX) = about +1050 kg system. Aftertreatment kept (MAN: simplified, not removed); HPDI pilot tank ignored (A). Used by powertrain.py in a second run for the hydrogen engine (diesel and HVO stay at the diesel mass)."
+            }
+        },
+        "urban_bus": {
+            "engine": {
+                "displacement_l": 8.1,
+                "rated_power_kW": 250,
+                "n_idle_rpm": 600,
+                "n_min_drive_rpm": 900,
+                "n_max_rpm": 1900,
+                "n_launch_rpm": 800
+            },
+            "gearbox": "ishift_direct",
+            "axle_ratio": 4.7,
+            "eta_axle": 0.97,
+            "tyre_dynamic_radius_m": 0.48,
+            "aux_mech_kW": 8.0,
+            "notes": "ASSUMPTIONS: 250 kW engine = the D13 map scaled by power (same BMEP map); city buses often use torque-converter automatics, I-Shift ratios used as a simplification; axle 4.70 so 50 km/h in 12th = ~1300 rpm; aux 8 kW incl. HVAC (JRC range). ",
+            "h2ice_mass": {
+                "mass_breakdown_kg": {
+                    "h2_5x350bar_cylinders_37.5kg [S: HEXAGON_T4]": 542,
+                    "minus_diesel_250L [A]": -209
+                },
+                "extra_mass_kg": 330,
+                "mass_range_kg": [
+                    100,
+                    600
+                ],
+                "mass_note": "Storage term only; engine difference not confirmable (A = 0). Used by powertrain.py in a second run for the hydrogen engine (diesel and HVO stay at the diesel mass)."
+            }
+        },
+        "coach": {
+            "engine": {
+                "displacement_l": 11.0,
+                "rated_power_kW": 340,
+                "n_idle_rpm": 600,
+                "n_min_drive_rpm": 900,
+                "n_max_rpm": 1900,
+                "n_launch_rpm": 800
+            },
+            "gearbox": "ishift_direct",
+            "axle_ratio": 2.3,
+            "eta_axle": 0.97,
+            "tyre_dynamic_radius_m": 0.5,
+            "aux_mech_kW": 6.0,
+            "notes": "ASSUMPTIONS: 340 kW engine = D13 map scaled by power; axle 2.30 so 100 km/h in 12th = ~1220 rpm; aux 6 kW.",
+            "h2ice_mass": {
+                "mass_breakdown_kg": {
+                    "h2_6x350bar_cylinders_45kg [S: HEXAGON_T4]": 651,
+                    "minus_diesel_400L [A]": -334
+                },
+                "extra_mass_kg": 320,
+                "mass_range_kg": [
+                    100,
+                    700
+                ],
+                "mass_note": "Storage term only; engine difference not confirmable (A = 0). Used by powertrain.py in a second run for the hydrogen engine (diesel and HVO stay at the diesel mass)."
+            }
+        }
     },
-    "bev": {
-     "battery_kWh": 330,
-     "soc_start": 0.9,
-     "soc_min": 0.05,
-     "C_discharge": 1.0,
-     "C_charge": 1.0,
-     "extra_mass_kg": 0
+    "missions": {
+        "timber_empty": {
+            "vehicle": "timber_truck",
+            "mass_kg": 20000,
+            "rot_mass_kg": 1400,
+            "CdA_m2": 10.4,
+            "cr_asphalt": 0.00676,
+            "cr_gravel": 0.0126
+        },
+        "timber_loaded": {
+            "vehicle": "timber_truck",
+            "mass_kg": 74000,
+            "rot_mass_kg": 1400,
+            "CdA_m2": 10.4,
+            "cr_asphalt": 0.00676,
+            "cr_gravel": 0.0126,
+            "max_gross_kg": 74000,
+            "tare_kg": 20000,
+            "mass_note": "max_gross_kg 74 t = Swedish BK4 limit, unchanged axle loads (S: Trafikverket, 'BK - barighetsklasser pa vagar och broar', https://bransch.trafikverket.se/for-dig-i-branschen/vag/bk--barighetsklasser-pa-vagar-och-broar/). No extra allowance for zero-emission vehicles above 74 t found (the EU +2 t of Reg. 2019/1242 applies to the international 40/44 t limits). The gross stays at 74 t for every powertrain and the extra powertrain mass reduces the payload. tare_kg = empty truck = timber_empty mass (A)."
+        },
+        "urban_bus": {
+            "vehicle": "urban_bus",
+            "curb_kg": 12000,
+            "n_pax": 12,
+            "kg_per_pax": 68,
+            "rot_mass_kg": 600,
+            "CdA_m2": 6.5,
+            "cr_asphalt": 0.00642,
+            "cr_gravel": 0.012,
+            "pax_note": "BASE CASE = Swedish average occupancy (decision 13/10/2026: average for energy/LCA, full load only to check the powertrain). 12 passengers (S/D: Trafikanalys 'Regional linjetrafik 2024', ~10 passengers per bus-km, ~15 % of places). 68 kg = EU reference mass. curb 12 t = A. gvw_kg 19.5 t = Volvo 7900 Electric data sheet 2024 (S). Sources:  Trafikanalys 'Regional linjetrafik 2024' (bus ~15 % of places occupied, ~10 passengers per bus-km, derived from rounded shares); Miljobarometern/Trafikanalys 24.5 % of seats occupied in 2025 for subsidised public transport (bus + rail); Trafikanalys 'Langvaga buss 2010' Tab. 1 (long-distance coach: 52 seats, ~71 % load factor, ~37 pax per bus-km, derived); NEA for IRU 2007 'Research on the weight of buses and touring coaches' p.32 (measured 75.6 kg per passenger + 16.76 kg luggage on coaches; EU reference 68 kg, Dir. 97/27).",
+            "gvw_kg": 19500
+        },
+        "coach": {
+            "vehicle": "coach",
+            "curb_kg": 14000,
+            "n_pax": 37,
+            "kg_per_pax": 80,
+            "rot_mass_kg": 700,
+            "CdA_m2": 5.0,
+            "cr_asphalt": 0.00642,
+            "cr_gravel": 0.012,
+            "pax_note": "BASE CASE = Swedish average occupancy: 37 passengers (D: Trafikanalys 'Langvaga buss 2010', 52 seats, ~71 % load factor). 80 kg incl. luggage = A (measured 92.4 kg, NEA/IRU 2007). curb 14 t = A. gvw_kg 20.2 t = Volvo 9700 coach, 53 seats, steerable tag axle (S: volvobuses.com Volvo 9700 specifications).",
+            "gvw_kg": 20200
+        }
     },
-    "fcev": {
-     "fc_net_kW": 85,
-     "battery_kWh": 45,
-     "C_discharge": 5.0,
-     "C_charge": 3.0,
-     "extra_mass_kg": 0
+    "hpdi": {
+        "pilot_share_full_load": 0.025,
+        "pilot_fuel": "hvo100",
+        "note": "AVL: 97.5 % H2 energy at full load. ASSUMPTION: constant pilot energy per cycle at a given speed."
     },
-    "note": "Motor 250 kW = matched to the diesel engine so every powertrain can drive the same cycle (A; the Volvo 7900 Electric has 200 kW, S). 2-speed gearbox (S: Volvo 7900 Electric). Battery 330 kWh (Volvo 7900 Electric option, secondary source). FC 85 kW and 45 kWh buffer are A. Aux 8 kW electric incl. HVAC is A (Boren 2020 measured 0.28 kWh/km of heat from an HVO heater on Gothenburg route 55)."
-   },
-   "coach": {
-    "motor_peak_kW": 340,
-    "n_gears": 2,
-    "v_top_kmh": 110,
-    "aux_el_kW": 6.0,
-    "driven_axle_load_share": {
-     "coach": 0.65
+    "electric": {
+        "_comment": "Data for electric.py (FCEV and BEV). S = sourced, D = derived from sources, A = assumption, to be confirmed with manufacturer data. extra_mass_kg (per vehicle, for bev and fcev) adds mass on top of the mission mass: battery or hydrogen tanks minus the removed diesel powertrain. Values and arithmetic in mass_breakdown_kg, rules in mass_method, full references in mass_sources (research 13/10/2026).",
+        "edrive": {
+            "machine_peak_efficiency": 0.965,
+            "machine_loss_shape": {
+                "c0": 0.0015,
+                "k_cu": 0.028,
+                "k_fe": 0.0025,
+                "k_fw": 0.00015
+            },
+            "inverter_loss": {
+                "a0": 0.002,
+                "a1": 0.006,
+                "a2": 0.006
+            },
+            "const_power_speed_ratio": 3.0,
+            "eta_gear": 0.97,
+            "gear_step": 1.8,
+            "regen_v_cut_kmh": 7.0,
+            "regen_adhesion_use": 0.2,
+            "note": "Loss model per unit of motor peak power: p_loss = c0 + k_cu t^2 + k_fe w^1.5 + k_fw w^3 (t = torque/T_max, w = speed/base speed), shape scaled so the machine peak efficiency is 96.5 % (S: Grunditz & Thiringer 2017, Chalmers, reference PMSMs 96.4-97.1 %). Inverter coefficients, constant-power speed ratio, gear step, gear efficiency (97 % is the Grunditz single-speed value), regen cut-off speed and regen limit (0.20 g on the driven-axle load) are A. Stops: when braking to a standstill, the kinetic energy below the regeneration cut-off speed (1/2 m_eff v_cut^2) goes to the friction brakes (with 10 m steps the last braking step would otherwise stay above the cut-off)."
+        },
+        "battery": {
+            "loss_at_1C": 0.03,
+            "charger_efficiency": 0.9,
+            "depot_charge_C_rate": 0.6,
+            "note": "Internal-resistance model with constant voltage: loss = loss_at_1C * P^2 / P_1C (A, ECM parameters not available). Charger efficiency 90 % (S: Skogforsk Arbetsrapport 1176-2023)."
+        },
+        "fuel_cell": {
+            "load_frac": [
+                0.05,
+                0.1,
+                0.25,
+                0.5,
+                0.75,
+                1.0
+            ],
+            "eta_sys_BOL": [
+                0.5,
+                0.6,
+                0.645,
+                0.61,
+                0.585,
+                0.56
+            ],
+            "eta_sys_EOL": [
+                0.4,
+                0.46,
+                0.5,
+                0.48,
+                0.46,
+                0.44
+            ],
+            "min_load_frac": 0.1,
+            "ramp_frac_per_s": 0.1,
+            "purge_share_of_h2": 0.005,
+            "dcdc_loss": {
+                "p0": 0.003,
+                "k1": 0.012,
+                "k2": 0.008
+            },
+            "ems": {
+                "filter_tau_s": 60,
+                "soc_ref": 0.55,
+                "soc_gain_band": 0.15,
+                "soc_min": 0.3,
+                "soc_max": 0.8
+            },
+            "note": "System efficiency (LHV) at 25 % and 100 % load BOL: S (DOE Program Record 26002, 2026); EOL at 25 % and 100 %: S (Wang & Ahluwalia, Argonne, 2025: 48-51 % peak, 40-48 % rated); other points interpolated (A). Purge and crossover are inside the efficiency; purge share 0.5 % (assumption) is reported separately only for the H2-emission inventory. Minimum load, ramp rate, DC/DC curve and EMS settings are A (not available from public sources)."
+        },
+        "vehicles": {
+            "timber_truck": {
+                "motor_peak_kW": 490,
+                "n_gears": 4,
+                "v_top_kmh": 95,
+                "aux_el_kW": 4.0,
+                "driven_axle_load_share": {
+                    "timber_empty": 0.45,
+                    "timber_loaded": 0.26
+                },
+                "bev": {
+                    "battery_kWh": 590,
+                    "soc_start": 0.9,
+                    "soc_min": 0.05,
+                    "C_discharge": 1.0,
+                    "C_charge": 1.0,
+                    "extra_mass_kg": 2460,
+                    "mass_breakdown_kg": {
+                        "battery_590kWh_at_146Whkg [D: VOLVO_7900E, EACTROS600]": 4041,
+                        "edrive_eaxle_cooling [A]": 300,
+                        "minus_D13_engine_and_aftertreatment [S: VOLVO_D13]": -1225,
+                        "minus_ishift_gearbox [S: VOLVO_ISHIFT]": -278,
+                        "minus_diesel_450L [A]": -376
+                    },
+                    "mass_range_kg": [
+                        1950,
+                        3270
+                    ],
+                    "mass_note": "Battery 590 kWh / 0.146 kWh/kg = 4041 kg (3831-4275 kg at 154-138 Wh/kg). Previous value 2000 kg (A) assumed 256 Wh/kg, a cell-level figure."
+                },
+                "fcev": {
+                    "fc_net_kW": 300,
+                    "battery_kWh": 70,
+                    "C_discharge": 5.0,
+                    "C_charge": 3.0,
+                    "extra_mass_kg": 290,
+                    "mass_breakdown_kg": {
+                        "fuel_cell_2x150kW [S: CELLCENTRIC]": 460,
+                        "buffer_battery_70kWh_at_146Whkg [D]": 479,
+                        "h2_system_700bar_40kg_at_4.32wt% [D: DOE_SA_700BAR]": 926,
+                        "edrive_eaxle_cooling [A]": 300,
+                        "minus_D13_engine_and_aftertreatment [S: VOLVO_D13]": -1225,
+                        "minus_ishift_gearbox [S: VOLVO_ISHIFT]": -278,
+                        "minus_diesel_450L [A]": -376
+                    },
+                    "mass_range_kg": [
+                        -190,
+                        1500
+                    ],
+                    "mass_note": "40 kg H2 usable (A) = one 200 km round trip with an aged fuel cell (~32 kg in this model) + reserve. Storage mass scales ~23 kg per kg H2 at 700 bar: with 60 kg H2 the net value is about +750 kg."
+                },
+                "note": "Motor 490 kW peak (S: Volvo FH Electric). FC 2 x 150 kW (S: Volvo/cellcentric test trucks). Buffer battery 70 kWh, 400 kW peak (S: Mercedes GenH2). BEV battery 590 kWh installed (D: Skogforsk 2.5/1.5 kWh/km, 200 km round trip, 85 % window, 20 % reserve). 4 gears like the eActros 600 e-axle (S), ratios A. Driven-axle load share A."
+            },
+            "urban_bus": {
+                "motor_peak_kW": 250,
+                "n_gears": 2,
+                "v_top_kmh": 85,
+                "aux_el_kW": 8.0,
+                "driven_axle_load_share": {
+                    "urban_bus": 0.65
+                },
+                "bev": {
+                    "battery_kWh": 330,
+                    "soc_start": 0.9,
+                    "soc_min": 0.05,
+                    "C_discharge": 1.0,
+                    "C_charge": 1.0,
+                    "extra_mass_kg": 1580,
+                    "mass_breakdown_kg": {
+                        "battery_330kWh_at_146Whkg [D: VOLVO_7900E, EACTROS600]": 2260,
+                        "edrive_cooling [A]": 300,
+                        "minus_8L_engine_and_aftertreatment_scaled_from_D13 [A]": -775,
+                        "minus_diesel_250L [A]": -209
+                    },
+                    "mass_range_kg": [
+                        970,
+                        2200
+                    ],
+                    "mass_note": "HIGH UNCERTAINTY: no sourced mass for a 7-9 L bus diesel engine; D13 package scaled by displacement 8.1/12.8. Replace with the Volvo D8K fact sheet."
+                },
+                "fcev": {
+                    "fc_net_kW": 85,
+                    "battery_kWh": 45,
+                    "C_discharge": 5.0,
+                    "C_charge": 3.0,
+                    "extra_mass_kg": 470,
+                    "mass_breakdown_kg": {
+                        "fuel_cell_85kW_at_0.28kWkg [D: BALLARD_FCMOVE]": 300,
+                        "buffer_battery_45kWh_at_146Whkg [D]": 308,
+                        "h2_5x350bar_cylinders_37.5kg [S: HEXAGON_T4]": 542,
+                        "edrive_cooling [A]": 300,
+                        "minus_8L_engine_and_aftertreatment_scaled_from_D13 [A]": -775,
+                        "minus_diesel_250L [A]": -209
+                    },
+                    "mass_range_kg": [
+                        0,
+                        1000
+                    ],
+                    "mass_note": "37.5 kg H2 in 5 x 350 bar cylinders (A): size it from the daily duty cycle. Cylinder mass only, valves/frames excluded."
+                },
+                "note": "Motor 250 kW = matched to the diesel engine so every powertrain can drive the same cycle (A; the Volvo 7900 Electric has 200 kW, S). 2-speed gearbox (S: Volvo 7900 Electric). Battery 330 kWh (Volvo 7900 Electric option, secondary source). FC 85 kW and 45 kWh buffer are A. Aux 8 kW electric incl. HVAC is A (Boren 2020 measured 0.28 kWh/km of heat from an HVO heater on Gothenburg route 55)."
+            },
+            "coach": {
+                "motor_peak_kW": 340,
+                "n_gears": 2,
+                "v_top_kmh": 110,
+                "aux_el_kW": 6.0,
+                "driven_axle_load_share": {
+                    "coach": 0.65
+                },
+                "bev": {
+                    "battery_kWh": 500,
+                    "soc_start": 0.9,
+                    "soc_min": 0.05,
+                    "C_discharge": 1.0,
+                    "C_charge": 1.0,
+                    "extra_mass_kg": 2340,
+                    "mass_breakdown_kg": {
+                        "battery_500kWh_at_146Whkg [D: VOLVO_7900E, EACTROS600]": 3425,
+                        "edrive_cooling [A]": 300,
+                        "minus_11L_engine_and_aftertreatment_scaled_from_D13 [A]": -1053,
+                        "minus_diesel_400L [A]": -334
+                    },
+                    "mass_range_kg": [
+                        1600,
+                        3100
+                    ],
+                    "mass_note": "Coach diesel engine 11 L: D13 package scaled by displacement (A). Replace with the Volvo D11K fact sheet."
+                },
+                "fcev": {
+                    "fc_net_kW": 180,
+                    "battery_kWh": 60,
+                    "C_discharge": 5.0,
+                    "C_charge": 3.0,
+                    "extra_mass_kg": 250,
+                    "mass_breakdown_kg": {
+                        "fuel_cell_180kW_at_0.65kWkg [D: CELLCENTRIC]": 276,
+                        "buffer_battery_60kWh_at_146Whkg [D]": 411,
+                        "h2_6x350bar_cylinders_45kg [S: HEXAGON_T4]": 651,
+                        "edrive_cooling [A]": 300,
+                        "minus_11L_engine_and_aftertreatment_scaled_from_D13 [A]": -1053,
+                        "minus_diesel_400L [A]": -334
+                    },
+                    "mass_range_kg": [
+                        -730,
+                        800
+                    ],
+                    "mass_note": "45 kg H2 at 350 bar (A). Cylinder mass only."
+                },
+                "note": "All coach electric sizes are A (motor matched to the diesel engine; FC 180 kW like Hyundai XCIENT)."
+            }
+        },
+        "mass_method": "Net extra mass vs the diesel vehicle = added components - removed components (sum of mass_breakdown_kg, rounded to 10 kg). Rules used everywhere: battery pack 146 Wh/kg (midpoint of 138 [EACTROS600] and 154 [VOLVO_7900E], range used for bounds; ICCT_2021 assumes 140); fuel cell system 0.65 kW/kg [CELLCENTRIC] for trucks/coach, 0.28 kW/kg [BALLARD_FCMOVE] for the city bus; 700 bar storage system 4.32 wt% H2 (midpoint of 4.19-4.45 [DOE_SA_700BAR]); 350 bar = 101 kg per 7.5 kg H2 cylinder [HEXAGON_T4] + H2; removed diesel engine + aftertreatment 1225 kg for the D13 [VOLVO_D13], bus engines scaled by displacement (A, replace with Volvo D8K/D11K fact sheets); I-Shift 278 kg [VOLVO_ISHIFT] removed only for the timber truck (e-axle architecture like eActros 600, 4 gears); buses keep a gearbox (A, difference 0); e-drive (motors, inverters, e-axle, extra cooling) 300 kg = A, NOT confirmed by any source, sensitivity 0-600 kg; diesel fuel on board: truck 450 L, coach 400 L, city bus 250 L at 0.835 kg/L (A); hydrogen on board sized from the simulated consumption + reserve (A). Missions with max_gross_kg (timber_loaded) keep the gross mass at the limit: the extra mass reduces the payload (payload_kg in the summaries) instead of raising the simulated mass. mass_range_kg: pack 154/138 Wh/kg, e-drive 0/600 kg, I-Shift removed/kept (timber), scaled bus/coach engine mass +/-25 % (A); FCEV and H2-ICE ranges from the research synthesis (13/10/2026).",
+        "mass_sources": {
+            "VOLVO_D13": "Volvo Trucks, Fact sheet D13S540A (Euro 6, 397 kW), 16/06/2025, p.3: engine dry weight ~1105 kg, exhaust aftertreatment (DOC+DPF+SCR+ASC) ~120 kg. https://stpi.it.volvo.com/STPIFiles/Volvo/FactSheet/D13S540A_Eng_02_338836622.pdf",
+            "VOLVO_ISHIFT": "Volvo Trucks, Fact sheet I-Shift AT2612 (without oil): 278 kg. https://stpi.it.volvo.com/STPIFiles/Volvo/FactSheet/AT2612_Eng_02_324367762.pdf",
+            "VOLVO_7900E": "Volvo Buses, Data sheet Volvo 7900 Electric, BED 207465, 15/08/2024, p.1-2: NCA battery pack 94 kWh / 609 kg = 154 Wh/kg (pack level). https://www.volvobuses.com/content/dam/volvo-buses/markets/master/city-and-intercity/complete-buses/volvo-7900-electric/data-sheet-7900-electric-en-2024.pdf",
+            "EACTROS600": "Daimler Truck press release, eActros 600 world premiere (2023): 3 x 207 kWh LFP packs; pack mass 1.5 t each (M. Wolf, Daimler R&D, quoted by electrive.com 10/10/2023) = 138 Wh/kg. SECONDARY SOURCE (trade press). https://www.electrive.com/2023/10/10/world-premiere-clear-the-stage-for-the-mercedes-benz-eactros-600/",
+            "ICCT_2021": "Basma et al., ICCT Working Paper 2021-29 'Long-haul battery electric trucks are technically feasible in Europe' (2021) and slides (2022): pack density 0.14 kWh/kg (2020), 0.23 kWh/kg projected 2030. https://theicct.org/wp-content/uploads/2022/01/Long-haul-be-trucks-EU-slides-02072022.pdf",
+            "CELLCENTRIC": "cellcentric, press release IAA Transportation 2022: BZA150 fuel cell system 150 kW net, ~230 kg (0.65 kW/kg). https://cellcentric.net/en/cellcentric-iaa-transportation-2022/",
+            "BALLARD_FCMOVE": "Ballard Power Systems, FCmove product page: FCmove-HD rated power 70 kW, weight 247 kg (0.28 kW/kg); used in the Solaris Urbino 12 hydrogen. URL to add (manufacturer product page, ballard.com).",
+            "DOE_SA_700BAR": "Strategic Analysis for US DOE, 'Final Report: Hydrogen Storage System Cost Analysis (2017-2021)', OSTI 1975554: Class 8 truck, 700 bar Type IV, complete system (tanks + BOP) 4.19-4.45 wt% H2. https://www.osti.gov/servlets/purl/1975554",
+            "HEXAGON_T4": "Hexagon Purus, 'Hydrogen Type 4 cylinder information' (rev. 05/22, 08/22): 350 bar cylinder H2-35-430X3190 = 101 kg empty, 312 L, 7.5 kg H2 (cylinder only, BOP excluded). https://s3.eu-central-1.amazonaws.com/hexagonassets/HPU_0222_04_HydrogenType4_NurTabelle.pdf",
+            "MAN_HTGX": "MAN Truck & Bus press material 2025 (hTGX): 56 kg H2 at 700 bar in 4 tanks (Voith module); H45 engine based on the D38 diesel; MAN Engines: hydrogen engine derived from the D3876 shares about 80 % of basic components. https://press.mantruckandbus.com/corporate/iaa-commercial-vehicles-man-honoured-with-truck-innovation-award-2025/ ; https://vision-mobility.de/en/news/man-plans-hydrogen-combustion-engine-htgx-317819.html"
+        }
     },
-    "bev": {
-     "battery_kWh": 500,
-     "soc_start": 0.9,
-     "soc_min": 0.05,
-     "C_discharge": 1.0,
-     "C_charge": 1.0,
-     "extra_mass_kg": 0
-    },
-    "fcev": {
-     "fc_net_kW": 180,
-     "battery_kWh": 60,
-     "C_discharge": 5.0,
-     "C_charge": 3.0,
-     "extra_mass_kg": 0
-    },
-    "note": "All coach electric sizes are A (motor matched to the diesel engine; FC 180 kW like Hyundai XCIENT)."
-   }
-  }
- }
+    "power_to_mass_rule": {
+        "status": "OPEN ISSUE (13/10/2026), not applied yet",
+        "rule": "Every powertrain has the same wheel power-to-mass ratio [kW/t] as the diesel reference on each mission, so all of them can follow the same driving cycle (a ~ P / (m v)). The current rule 'electric motor = diesel engine power' no longer holds once the mass penalty is included. Base case with Swedish average occupancy (12 / 37 passengers): BEV city bus 60 steps above the motor limit, BEV coach 154, H2-ICE city bus 17, H2-ICE coach 5; with 40 passengers on the city bus: BEV 294 steps (5-7 % above the limit), H2-ICE 205. Missing energy < 0.5 %.",
+        "test_13_10_2026": "Motor 250 -> 270 kW (urban bus) and 340 -> 370 kW (coach): BEV deficit steps -> 0, consumption +1.0 % / +1.3 % (larger motor at lower relative load, lower part-load efficiency); FCEV +0.4 % / +0.9 % with the same motor. Real reference: Volvo 7900 Electric has 200 kW and runs urban lines by accelerating less than this cycle (~0.8 m/s2 at 45 km/h instead of 1.0). (Test done with 40 passengers on the city bus.)",
+        "check_table": {
+            "timber_empty": {
+                "diesel": {
+                    "wheel_kW": 355,
+                    "mass_kg": 20000,
+                    "kW_per_t": 17.7,
+                    "wheel_kW_needed_for_equal_kW_per_t": 355
+                },
+                "h2ice": {
+                    "wheel_kW": 355,
+                    "mass_kg": 20550,
+                    "kW_per_t": 17.3,
+                    "wheel_kW_needed_for_equal_kW_per_t": 365
+                },
+                "fcev": {
+                    "wheel_kW": 461,
+                    "mass_kg": 20290,
+                    "kW_per_t": 22.7,
+                    "wheel_kW_needed_for_equal_kW_per_t": 360
+                },
+                "bev": {
+                    "wheel_kW": 461,
+                    "mass_kg": 22460,
+                    "kW_per_t": 20.5,
+                    "wheel_kW_needed_for_equal_kW_per_t": 399
+                }
+            },
+            "timber_loaded": {
+                "diesel": {
+                    "wheel_kW": 355,
+                    "mass_kg": 74000,
+                    "kW_per_t": 4.8,
+                    "wheel_kW_needed_for_equal_kW_per_t": 355
+                },
+                "h2ice": {
+                    "wheel_kW": 355,
+                    "mass_kg": 74000,
+                    "kW_per_t": 4.8,
+                    "wheel_kW_needed_for_equal_kW_per_t": 355
+                },
+                "fcev": {
+                    "wheel_kW": 461,
+                    "mass_kg": 74000,
+                    "kW_per_t": 6.2,
+                    "wheel_kW_needed_for_equal_kW_per_t": 355
+                },
+                "bev": {
+                    "wheel_kW": 461,
+                    "mass_kg": 74000,
+                    "kW_per_t": 6.2,
+                    "wheel_kW_needed_for_equal_kW_per_t": 355
+                }
+            },
+            "urban_bus": {
+                "diesel": {
+                    "wheel_kW": 219,
+                    "mass_kg": 12816,
+                    "kW_per_t": 17.1,
+                    "wheel_kW_needed_for_equal_kW_per_t": 219
+                },
+                "h2ice": {
+                    "wheel_kW": 219,
+                    "mass_kg": 13146,
+                    "kW_per_t": 16.6,
+                    "wheel_kW_needed_for_equal_kW_per_t": 224
+                },
+                "fcev": {
+                    "wheel_kW": 235,
+                    "mass_kg": 13286,
+                    "kW_per_t": 17.7,
+                    "wheel_kW_needed_for_equal_kW_per_t": 227
+                },
+                "bev": {
+                    "wheel_kW": 235,
+                    "mass_kg": 14396,
+                    "kW_per_t": 16.3,
+                    "wheel_kW_needed_for_equal_kW_per_t": 246
+                }
+            },
+            "coach": {
+                "diesel": {
+                    "wheel_kW": 302,
+                    "mass_kg": 16960,
+                    "kW_per_t": 17.8,
+                    "wheel_kW_needed_for_equal_kW_per_t": 302
+                },
+                "h2ice": {
+                    "wheel_kW": 302,
+                    "mass_kg": 17280,
+                    "kW_per_t": 17.5,
+                    "wheel_kW_needed_for_equal_kW_per_t": 307
+                },
+                "fcev": {
+                    "wheel_kW": 320,
+                    "mass_kg": 17210,
+                    "kW_per_t": 18.6,
+                    "wheel_kW_needed_for_equal_kW_per_t": 306
+                },
+                "bev": {
+                    "wheel_kW": 320,
+                    "mass_kg": 19300,
+                    "kW_per_t": 16.6,
+                    "wheel_kW_needed_for_equal_kW_per_t": 343
+                }
+            }
+        },
+        "note": "wheel_kW: diesel/H2-ICE = (rated - aux) x gearbox x axle x 0.97 (as missions.py p_wheel_max); electric = motor peak x gear x axle. timber_loaded: the gross mass is capped at 74 t for every powertrain, so kW/t depends only on the installed power."
+    }
 }

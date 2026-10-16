@@ -39,7 +39,7 @@
   },
   "urban_bus": {
     "length_km": 100.0,
-    "duration_min": 351.3,
+    "duration_min": 351.2,
     "avg_speed_kmh": 17.1,
     "avg_driving_speed_kmh": 28.7,
     "standstill_share_pct": 40.6,
@@ -48,7 +48,7 @@
     "max_grade_pct": 2.5,
     "vehicle": "Urban bus 12 m",
     "vehicle_params": {
-      "mass_kg": 14700,
+      "mass_kg": 12816,
       "rot_mass_kg": 600,
       "CdA_m2": 6.5,
       "p_wheel_max_kW": 218.6,
@@ -67,7 +67,7 @@
     "max_grade_pct": 3.8,
     "vehicle": "Coach 13 m",
     "vehicle_params": {
-      "mass_kg": 17200,
+      "mass_kg": 16960,
       "rot_mass_kg": 700,
       "CdA_m2": 5.0,
       "p_wheel_max_kW": 301.7,

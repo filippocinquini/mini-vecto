@@ -8,6 +8,9 @@ run_all.py - runs the whole model with one command:   python3 run_all.py
   5 export_excel.py          results/consumption_<powertrain>.xlsx
 
 Options:  python3 run_all.py --keep-cycles   skip step 1 (cycles unchanged, faster)
+          python3 run_all.py --engine-map model      use the semi-empirical engine map (50 % peak)
+          python3 run_all.py --engine-map measured   use the measured engine map (44 % peak)
+          (default: "engine_map" > "source" in vehicles.json)
 """
 import importlib.util, os, subprocess, sys, time
 
@@ -19,6 +22,8 @@ if missing:
 steps = ["missions.py", "powertrain.py", "electric.py", "plot_operating_points.py", "export_excel.py"]
 if "--keep-cycles" in sys.argv:
     steps = steps[1:]
+if "--engine-map" in sys.argv:
+    os.environ["MINIVECTO_ENGINE_MAP"] = sys.argv[sys.argv.index("--engine-map") + 1]
 t0 = time.time()
 for i, s in enumerate(steps, 1):
     print(f"[{i}/{len(steps)}] {s} ...", flush=True)
@@ -32,6 +37,8 @@ print(f"\nDone in {time.time() - t0:.0f} s.")
 import json
 ice = {r["mission"]: r for r in json.load(open(os.path.join(HERE, "consumption_summary.json")))}
 el = {(r["powertrain"], r["mission"]): r for r in json.load(open(os.path.join(HERE, "consumption_summary_electric.json")))}
+import powertrain
+print("\nEngine map:", powertrain.select_engine_map()["label"])
 print("\nMean consumption per 100 km")
 print(f"{'mission':<15}{'Diesel l':>9}{'HVO l':>8}{'H2-ICE kg':>11}{'FCEV kg new/aged':>19}{'BEV kWh (battery)':>19}")
 for m, r in ice.items():

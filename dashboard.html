@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mini-VECTO dashboard</title>
+<style>
+:root{
+  --ink:#16232E; --ink2:#3D4A55; --mute:#7A858E; --paper:#F5F4EF; --card:#FCFBF8; --line:#DEDBD2; --band:#ECEAE3;
+  --teal:#1B6F66; --orange:#A8521A; --navy:#16232E;
+  --c-diesel:#5B6770; --c-hvo100:#8A7A36; --c-h2ice:#2E6DB4; --c-fcev:#1B8A7A; --c-bev:#C0611E;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Helvetica Neue",Arial,sans-serif}
+header{background:var(--navy);color:#F5F4EF;padding:18px 28px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+header h1{margin:0;font:600 24px/1.2 "SF Mono",Menlo,Consolas,monospace;letter-spacing:.5px}
+header p{margin:2px 0 0;color:#B9C6CF;font-size:14px}
+.run{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px}
+button.primary{background:#E9A15E;border-color:#E9A15E;color:#16232E;font-weight:600;padding:9px 20px}
+button.primary:disabled{opacity:.55;cursor:wait}
+label.chk{color:#D6DEE3;font-size:13px;display:flex;gap:6px;align-items:center}
+.progress{display:flex;gap:6px;padding:10px 28px;background:#1F313F;flex-wrap:wrap;align-items:center}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;background:#2C4252;color:#9FB0BC}
+.pill.done{background:#2F6B60;color:#E4F2EF}.pill.now{background:#E9A15E;color:#16232E;font-weight:600}
+#status{color:#C9D3D9;font-size:13px;margin-left:8px}
+main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+section{margin-bottom:36px}
+h2{font-size:22px;margin:0 0 4px}
+.sub{color:var(--ink2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+/* stepper */
+.stepper{display:grid;grid-template-columns:230px 1fr;gap:18px}
+.steps{display:flex;flex-direction:column;gap:6px}
+.steps button{text-align:left;display:flex;gap:10px;align-items:center;border-radius:10px;padding:10px 12px}
+.steps button .n{width:24px;height:24px;border-radius:50%;background:var(--band);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:none}
+.steps button.on{border-color:var(--teal);background:#E6F0EE}
+.steps button.on .n{background:var(--teal);color:#fff}
+.panel h3{margin:0 0 4px;font-size:19px}.panel .lead{color:var(--ink2);margin:0 0 12px}
+.panel svg{width:100%;height:auto;display:block}
+.eq{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:var(--band);border-radius:8px;padding:8px 12px;display:inline-block;margin:6px 0}
+.nav{display:flex;justify-content:space-between;margin-top:14px}
+ul.pts{margin:8px 0 0;padding-left:20px;color:var(--ink2)}
+/* results */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button.on{background:var(--ink);color:#F5F4EF;border-color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.kpi b{display:block;font-size:22px}.kpi span{color:var(--mute);font-size:13px}
+.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--band);font-weight:600}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.note{color:var(--mute);font-size:13px;margin-top:8px}
+.files a{display:inline-block;margin:4px 8px 4px 0;color:var(--teal)}
+.figs img{max-width:100%;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#fff}
+pre#log{background:#0F1A22;color:#C9D3D9;font-size:12px;border-radius:10px;padding:10px;max-height:180px;overflow:auto;white-space:pre-wrap;display:none}
+.empty{padding:30px;text-align:center;color:var(--ink2)}
+@media (max-width:860px){.stepper,.grid2{grid-template-columns:1fr}.steps{flex-direction:row;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>mini-VECTO</h1><p>Heavy-duty powertrain simulator · TRA545 Project #4 · diesel, HVO100, hydrogen engine, fuel cell, battery electric</p></div>
+  <div class="run">
+    <label class="chk"><input type="checkbox" id="keep"> keep driving cycles (faster)</label>
+    <button class="primary" id="runBtn">▶ Run model</button>
+  </div>
+</header>
+<div class="progress" id="progress"></div>
+<main>
+  <pre id="log"></pre>
+
+  <section>
+    <h2>How mini-VECTO works</h2>
+    <p class="sub">A backward simulation: from the speed the vehicle must have, back to the fuel or electricity it needs. Five steps, every 10 m of a 100 km mission.</p>
+    <div class="card stepper">
+      <div class="steps" id="stepNav"></div>
+      <div class="panel" id="stepPanel"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+    <p class="sub" id="updated">Loading…</p>
+    <div class="tabs" id="tabs"></div>
+    <div id="results"></div>
+  </section>
+
+  <section>
+    <h2>All missions at a glance</h2>
+    <p class="sub">Energy at the tank or battery, kWh per km. Lower is better; the native units are in each mission's table.</p>
+    <div class="card" id="overview"></div>
+  </section>
+
+  <section>
+    <h2>Files</h2>
+    <div class="card"><div class="files" id="files"></div><div class="figs" id="figs"></div></div>
+  </section>
+</main>
+
+<script>
+const PT = {diesel:"Diesel",hvo100:"HVO100",h2ice:"H2-ICE",fcev:"FCEV",bev:"BEV"};
+const COL = k => getComputedStyle(document.documentElement).getPropertyValue("--c-"+k).trim();
+const fmt = (x,d=1) => x==null||x===""?"–":Number(x).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const $ = id => document.getElementById(id);
+let DATA=null, MISSION="urban_bus", STEP=0;
+const NS="http://www.w3.org/2000/svg";
+function svg(w,h){const s=document.createElementNS(NS,"svg");s.setAttribute("viewBox",`0 0 ${w} ${h}`);return s}
+function el(p,tag,a={},text){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(text!=null)e.textContent=text;p.appendChild(e);return e}
+
+/* ---------------- charts ---------------- */
+function lineChart(xs, series, o={}){
+  const W=760,H=o.h||260,L=46,R=o.y2?52:16,T=14,B=34, s=svg(W,H);
+  const xmin=Math.min(...xs), xmax=Math.max(...xs);
+  const ymax=o.ymax||Math.max(...series.filter(q=>!q.y2).flatMap(q=>q.y))*1.08||1;
+  const X=x=>L+(x-xmin)/(xmax-xmin||1)*(W-L-R), Y=y=>H-B-y/ymax*(H-T-B);
+  let y2min=0,y2max=1;
+  const s2=series.filter(q=>q.y2);
+  if(s2.length){y2min=Math.min(...s2[0].y);y2max=Math.max(...s2[0].y)+1e-6}
+  const Y2=y=>H-B-(y-y2min)/(y2max-y2min)*(H-T-B)*0.55;
+  for(let i=0;i<=4;i++){const v=ymax*i/4;el(s,"line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:"#E3E0D7"});el(s,"text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":11,fill:"#7A858E"},Math.round(v))}
+  for(let i=0;i<=5;i++){const v=xmin+(xmax-xmin)*i/5;el(s,"text",{x:X(v),y:H-B+16,"text-anchor":"middle","font-size":11,fill:"#7A858E"},fmt(v,xmax-xmin<10?1:0))}
+  el(s,"text",{x:W-R,y:H-4,"text-anchor":"end","font-size":11,fill:"#7A858E"},o.xlabel||"");
+  el(s,"text",{x:4,y:10,"font-size":11,fill:"#7A858E"},o.ylabel||"");
+  for(const q of series){
+    const yf=q.y2?Y2:Y;
+    const d=xs.map((x,i)=>`${i?"L":"M"}${X(x).toFixed(1)},${yf(q.y[i]).toFixed(1)}`).join("");
+    if(q.area) el(s,"path",{d:d+`L${X(xmax)},${H-B}L${X(xmin)},${H-B}Z`,fill:q.color,opacity:.16,stroke:"none"});
+    else el(s,"path",{d,fill:"none",stroke:q.color,"stroke-width":q.w||1.6,"stroke-dasharray":q.dash||""});
+  }
+  if(o.marks) for(const m of o.marks) el(s,"line",{x1:X(m),x2:X(m),y1:H-B,y2:H-B-7,stroke:"#A8521A","stroke-width":1.5});
+  let lx=L+8; for(const q of series){ if(!q.label)continue; el(s,"rect",{x:lx,y:T,width:12,height:4,fill:q.color,opacity:q.area?.5:1}); el(s,"text",{x:lx+16,y:T+6,"font-size":12,fill:"#3D4A55"},q.label); lx+=q.label.length*6.6+34 }
+  return s;
+}
+function barChart(items, unit){
+  const W=520,rowH=40,L=80,R=150,H=items.length*rowH+20,s=svg(W,H);
+  const vmax=Math.max(...items.map(i=>Math.max(i.value,i.value2||0)))*1.05||1;
+  items.forEach((it,k)=>{const y=10+k*rowH,w=(W-L-R)*it.value/vmax;
+    el(s,"text",{x:L-8,y:y+19,"text-anchor":"end","font-size":13,fill:"#16232E","font-weight":600},it.label);
+    el(s,"rect",{x:L,y:y+6,width:Math.max(w,1),height:20,rx:3,fill:it.color});
+    if(it.value2){const w2=(W-L-R)*it.value2/vmax; el(s,"rect",{x:L,y:y+6,width:w2,height:20,rx:3,fill:"none",stroke:it.color,"stroke-dasharray":"3 2"})}
+    el(s,"text",{x:L+Math.max(w,(it.value2?(W-L-R)*it.value2/vmax:0))+8,y:y+20,"font-size":13,fill:"#3D4A55"},`${fmt(it.value,2)} ${unit}${it.note?"  "+it.note:""}`);
+  });
+  return s;
+}
+
+/* ---------------- explainer ---------------- */
+function boxes(s, items, y, h=46, gap=18, x0=10, W=740){
+  const n=items.length, w=(W-x0-gap*(n-1))/n;
+  items.forEach((t,i)=>{const x=x0+i*(w+gap);
+    el(s,"rect",{x,y,width:w,height:h,rx:8,fill:t.fill||"#FCFBF8",stroke:t.stroke||"#C9C5B9"});
+    el(s,"text",{x:x+w/2,y:y+h/2-(t.sub?3:-4),"text-anchor":"middle","font-size":13,"font-weight":600,fill:t.color||"#16232E"},t.t);
+    if(t.sub) el(s,"text",{x:x+w/2,y:y+h/2+13,"text-anchor":"middle","font-size":11,fill:"#5C6770"},t.sub);
+    if(i<n-1) el(s,"path",{d:`M${x+w+3},${y+h/2}L${x+w+gap-3},${y+h/2}M${x+w+gap-8},${y+h/2-4}L${x+w+gap-3},${y+h/2}L${x+w+gap-8},${y+h/2+4}`,stroke:"#A8521A","stroke-width":1.6,fill:"none"});
+  });
+}
+const STEPS=[
+ {t:"Route",lead:"missions.py turns a road description into 10,000 steps of 10 m.",
+  draw:m=>{const p=m.profile;const g=lineChart(p.s_km,[{y:p.vlim.map(v=>Math.min(v,110)),color:"#9FAFBD",label:"Speed limit incl. curves [km/h]"},{y:p.z,y2:true,area:true,color:"#8f6214",label:"Altitude (relative)"}],{xlabel:"km",ylabel:"km/h",marks:p.stops_km,h:240,y2:true,ymax:115});return g},
+  pts:m=>[`Segments: length, speed limit, surface (asphalt or gravel), hill amplitude.`,`${m.profile.curves} curves: each lowers the limit so that v²/R stays within the side friction drivers accept (Trafikverket).`,`${m.stops} stops (orange ticks) with their waiting time; hills are random but reproducible, start and end at the same altitude.`]},
+ {t:"Driver",lead:"A driver model decides the speed actually driven: brake in time, accelerate as far as the driver wants and the engine allows.",
+  draw:m=>{const p=m.profile;return lineChart(p.zoom_s_km,[{y:p.zoom_vlim.map(v=>Math.min(v,110)),color:"#9FAFBD",label:"Limit"},{y:p.zoom_v,color:"#1B6F66",w:2.2,label:"Simulated speed"}],{xlabel:"km (first 3 km)",ylabel:"km/h",h:240,ymax:Math.max(...p.zoom_vlim.map(v=>Math.min(v,110)))*1.1})},
+  pts:()=>["Backward sweep, from the end: v² = v_next² + 2·d·Δs, so every limit and stop is reached with comfortable deceleration d.","Forward sweep, from the start: a = min(driver wish, (P/v − resistances)/m). The cycle is built for the diesel vehicle and used by every powertrain, so all are compared on the same driving.","Time per step = 10 m / mean speed, plus the waiting time at stops."]},
+ {t:"Wheel force",lead:"At every step the wheels must deliver the force that keeps the vehicle on the cycle. Same equation for every powertrain, each with its own mass.",
+  draw:()=>{const s=svg(760,250);
+    el(s,"path",{d:"M40,220 L720,150 L720,220 Z",fill:"#ECEAE3"});
+    const g=el(s,"g",{transform:"translate(330,150) rotate(-5.9)"});
+    el(g,"rect",{x:-70,y:-48,width:150,height:48,rx:6,fill:"#16232E"});el(g,"circle",{cx:-40,cy:4,r:12,fill:"#3D4A55"});el(g,"circle",{cx:50,cy:4,r:12,fill:"#3D4A55"});
+    const arr=(x1,y1,x2,y2,c,t,tx,ty)=>{el(s,"line",{x1,y1,x2,y2,stroke:c,"stroke-width":3});const a=Math.atan2(y2-y1,x2-x1);el(s,"path",{d:`M${x2},${y2}L${x2-10*Math.cos(a-0.4)},${y2-10*Math.sin(a-0.4)}L${x2-10*Math.cos(a+0.4)},${y2-10*Math.sin(a+0.4)}Z`,fill:c});el(s,"text",{x:tx,y:ty,"font-size":13,fill:c,"font-weight":600},t)};
+    arr(420,118,560,104,"#1B6F66","Traction F (what the powertrain delivers)",470,92);
+    arr(250,128,150,138,"#2E6DB4","Air ½ρC_dA·v²",90,124);
+    arr(250,150,170,158,"#8A7A36","Rolling c_r·m·g·cosα",60,178);
+    arr(330,130,330,205,"#A8521A","Gravity m·g (slope part m·g·sinα)",340,232);
+    el(s,"text",{x:40,y:30,"font-size":13,fill:"#3D4A55"},"Inertia m_eff·a: extra force to accelerate (or recovered when braking)");
+    return s},
+  pts:()=>["F = m_eff·a + m·g·sinα + c_r·m·g·cosα + ½·ρ·C_dA·v²  (negative F = braking).","The mass penalty enters here: battery and hydrogen tanks add mass, so more force for the same cycle. On the 74 t timber leg the gross mass is fixed and the payload shrinks instead.","Energy of a step = F × 10 m; summing gives traction and braking work."]},
+ {t:"Powertrain",lead:"powertrain.py and electric.py follow the force back to the energy source.",
+  draw:()=>{const s=svg(760,300);
+    const row=(y,label,items)=>{el(s,"text",{x:10,y:y-8,"font-size":12,"font-weight":600,fill:"#5C6770"},label);boxes(s,items,y)};
+    row(30,"Diesel · HVO100 · hydrogen engine",[{t:"Wheel",sub:"F, v"},{t:"Axle + I-Shift",sub:"best of 12 gears"},{t:"Engine map",sub:"measured, 44 % peak"},{t:"Fuel",sub:"diesel / HVO / H₂ + pilot",stroke:"#5B6770"}]);
+    row(130,"Battery electric (BEV)",[{t:"Wheel",sub:"F, v"},{t:"Motor + inverter",sub:"losses, regeneration"},{t:"Battery",sub:"loss ∝ P², charge state"},{t:"Grid",sub:"charger 90 %",stroke:"#C0611E"}]);
+    row(230,"Fuel cell electric (FCEV)",[{t:"Wheel",sub:"F, v"},{t:"Motor + inverter",sub:"losses, regeneration"},{t:"Buffer battery",sub:"takes the peaks"},{t:"Fuel cell → H₂",sub:"follows 60 s average",stroke:"#1B8A7A"}]);
+    return s},
+  pts:()=>["Engines: for every gear the engine speed and torque are computed; the feasible gear with the lowest fuel use wins. Stops: the engine idles.","Electric: losses depend on motor torque and speed; when braking, the motor recovers energy down to 7 km/h, within the grip of the driven axle and what the battery accepts. The rest goes to the friction brakes.","Fuel cell: efficiency depends on load; hydrogen is given for a new (BOL) and an aged (EOL) stack."]},
+ {t:"Results",lead:"Every quantity is saved every 10 m, then summed per mission and written to Excel with live formulas.",
+  draw:()=>{const s=svg(760,120);boxes(s,[{t:"Cycle CSV",sub:"10 m steps"},{t:"Step results",sub:"one CSV per powertrain"},{t:"Summaries",sub:"JSON per mission"},{t:"5 Excel files",sub:"formulas + notes"},{t:"This page",sub:"charts below",fill:"#E6F0EE",stroke:"#1B6F66"}],36,52);return s},
+  pts:()=>["All inputs and their sources are in vehicles.json (S = sourced, D = derived, A = assumption).","The ▶ Run button above runs the whole chain in about 35 s and refreshes this page."]},
+];
+function renderStepper(){
+  $("stepNav").innerHTML="";STEPS.forEach((st,i)=>{const b=document.createElement("button");b.className=i===STEP?"on":"";b.innerHTML=`<span class="n">${i+1}</span>${st.t}`;b.onclick=()=>{STEP=i;renderStepper()};$("stepNav").appendChild(b)});
+  const st=STEPS[STEP], m=DATA&&DATA.ok?DATA.missions.find(x=>x.tag===MISSION):null, P=$("stepPanel");
+  P.innerHTML=`<h3>${STEP+1}. ${st.t}</h3><p class="lead">${st.lead}</p>`;
+  if(m||STEP>=2){P.appendChild(st.draw(m));const ul=document.createElement("ul");ul.className="pts";st.pts(m).forEach(t=>{const li=document.createElement("li");li.textContent=t;ul.appendChild(li)});P.appendChild(ul)}
+  else P.insertAdjacentHTML("beforeend",`<div class="empty">Run the model to see this step with real data.</div>`);
+  if(m&&STEP<2) P.insertAdjacentHTML("beforeend",`<p class="note">Shown for: ${m.title}. Change mission in the Results tabs.</p>`);
+  const nav=document.createElement("div");nav.className="nav";
+  nav.innerHTML=`<button ${STEP===0?"disabled":""} id="prev">← Previous</button><button ${STEP===STEPS.length-1?"disabled":""} id="next">Next →</button>`;
+  P.appendChild(nav);$("prev").onclick=()=>{STEP--;renderStepper()};$("next").onclick=()=>{STEP++;renderStepper()};
+}
+
+/* ---------------- results ---------------- */
+function renderResults(){
+  if(!DATA||!DATA.ok){$("updated").textContent=DATA?DATA.message:"";$("results").innerHTML="";return}
+  $("updated").textContent=`Results of ${DATA.updated} · engine map: ${DATA.engine_map}`;
+  $("tabs").innerHTML="";DATA.missions.forEach(m=>{const b=document.createElement("button");b.textContent=m.title.replace(/, 100 km.*$/,"").replace("Timber truck, ","Timber · ");b.className=m.tag===MISSION?"on":"";b.onclick=()=>{MISSION=m.tag;renderResults();renderStepper()};$("tabs").appendChild(b)});
+  const m=DATA.missions.find(x=>x.tag===MISSION)||DATA.missions[0], R=$("results");
+  const tp=m.powertrains;
+  R.innerHTML=`<div class="kpis">
+    <div class="kpi"><b>${fmt(m.km,0)} km</b><span>distance</span></div>
+    <div class="kpi"><b>${fmt(m.time_min,0)} min</b><span>time incl. stops</span></div>
+    <div class="kpi"><b>${fmt(m.avg_kmh)} km/h</b><span>mean speed</span></div>
+    <div class="kpi"><b>${m.stops??"–"}</b><span>stops</span></div>
+    <div class="kpi"><b>${m.n_pax!=null?m.n_pax+" pax":fmt(tp[0].payload_t)+" t"}</b><span>${m.n_pax!=null?"passengers (base case)":"timber per round trip (diesel)"}</span></div></div>
+    <div class="grid2"><div class="card"><h3 style="margin:0 0 6px">Energy per km</h3><div id="bars"></div>
+      <p class="note">Tank or battery energy. FCEV bar = mid-life stack, dashed = aged stack. BEV dashed = from the grid incl. charging losses.</p></div>
+    <div class="card"><h3 style="margin:0 0 6px">Consumption and vehicle</h3><div id="tbl"></div></div></div>
+    <div class="card" style="margin-top:14px"><h3 style="margin:0 0 6px">Speed and altitude along the mission</h3><div id="prof"></div></div>`;
+  const items=tp.map(p=>({label:p.name,value:p.kwh_km,color:COL(p.key),
+    value2:p.key==="fcev"?p.range[1]/100*33.333:(p.key==="bev"?p.grid_kwh_km:null),
+    note:p.key==="hvo100"?"(same engine)":""}));
+  $("bars").appendChild(barChart(items,"kWh/km"));
+  const pay=m.tag==="timber_loaded";
+  let t=`<table><tr><th>Powertrain</th><th>Consumption</th><th>Extra mass</th><th>${pay?"Timber/trip":"Mass"}</th><th>Friction brakes</th><th>Deficit</th></tr>`;
+  for(const p of tp) t+=`<tr><td><span class="sw" style="background:${COL(p.key)}"></span>${p.name}</td><td>${fmt(p.value,p.value<20?2:1)} <small>${p.unit.replace(" (battery)","").replace(" (mid-life)","")}</small></td><td>${p.extra?"+"+fmt(p.extra,0)+" kg":"–"}</td><td>${pay?fmt(p.payload_t)+" t":fmt(p.mass/1000)+" t"}</td><td>${fmt(p.friction_kWh,1)} kWh</td><td>${p.deficit??"–"}</td></tr>`;
+  t+=`</table><p class="note">Friction brakes = braking energy not recovered on the mission (total braking at the wheels ≈ ${fmt(m.braking_kWh,0)} kWh). Deficit = 10 m steps where the powertrain could not deliver the cycle's demand.${tp.find(p=>p.key==="fcev").range?` FCEV new / aged: ${fmt(tp[3].range[0],2)} / ${fmt(tp[3].range[1],2)} kg/100 km.`:""}</p>`;
+  $("tbl").innerHTML=t;
+  if(m.profile) $("prof").appendChild(lineChart(m.profile.s_km,[{y:m.profile.vlim.map(v=>Math.min(v,110)),color:"#9FAFBD",label:"Limit"},{y:m.profile.v,color:"#1B6F66",w:1.4,label:"Simulated speed [km/h]"},{y:m.profile.z,y2:true,area:true,color:"#8f6214",label:"Altitude"}],{xlabel:"km",ylabel:"km/h",marks:m.profile.stops_km,y2:true,ymax:115}));
+  // overview
+  let o=`<table><tr><th>Mission</th>${Object.values(PT).map(n=>`<th>${n}</th>`).join("")}</tr>`;
+  for(const mm of DATA.missions){const best=Math.min(...mm.powertrains.map(p=>p.kwh_km));
+    o+=`<tr><td>${mm.title.replace(/, 100 km.*$/,"")}</td>${mm.powertrains.map(p=>`<td style="${p.kwh_km===best?"font-weight:700;color:#1B6F66":""}">${fmt(p.kwh_km,2)}</td>`).join("")}</tr>`}
+  $("overview").innerHTML=o+`</table><p class="note">Bold = lowest energy per km on that mission. Energy per km is not yet energy per passenger-km or per tonne-km: see the functional units in the report.</p>`;
+  $("files").innerHTML="<b>Excel workbooks:</b> "+DATA.excel.map(f=>`<a href="/files/${f}">${f}</a>`).join("");
+  $("figs").innerHTML=DATA.figures.map(f=>`<div class="note">${f}</div><img src="/files/${f}?t=${Date.now()}" alt="${f}">`).join("");
+}
+
+/* ---------------- run ---------------- */
+const NAMES5=["Driving cycles","Engines","Electric","Engine figure","Excel"];
+function renderProgress(s){
+  const names=s&&s.steps===4?NAMES5.slice(1):NAMES5;
+  $("progress").innerHTML=names.map((n,i)=>{const k=i+1;let c="pill";if(s&&s.running){if(k<s.step)c+=" done";else if(k===s.step)c+=" now"}else if(s&&s.returncode===0)c+=" done";return `<span class="${c}">${k}. ${n}</span>`}).join("")+`<span id="status"></span>`;
+  if(!s)return;
+  if(s.running) $("status").textContent=`Running… ${s.label||""}`;
+  else if(s.returncode===0) $("status").textContent=`Done in ${Math.round(s.finished-s.started)} s`;
+  else if(s.returncode!=null) $("status").textContent="Run failed: see the log";
+}
+async function poll(){
+  const s=await (await fetch("/api/status")).json();
+  renderProgress(s);$("runBtn").disabled=s.running;
+  if(s.log.length){$("log").style.display="block";$("log").textContent=s.log.join("\n");$("log").scrollTop=1e9}
+  if(s.running) setTimeout(poll,700); else if(s.finished){await load()}
+}
+$("runBtn").onclick=async()=>{
+  $("runBtn").disabled=true;
+  await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keep_cycles:$("keep").checked})});
+  poll();
+};
+async function load(){DATA=await (await fetch("/api/data")).json();renderResults();renderStepper()}
+renderProgress(null);load();fetch("/api/status").then(r=>r.json()).then(s=>{if(s.running)poll()});
+</script>
+</body>
+</html>

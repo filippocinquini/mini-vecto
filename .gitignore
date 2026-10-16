@@ -18,3 +18,6 @@ Thumbs.db
 
 # Excel lock files
 ~$*.xlsx
+
+# your own data that should stay local
+/data/private/

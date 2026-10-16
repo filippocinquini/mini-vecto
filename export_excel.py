@@ -16,14 +16,25 @@ OUT = os.path.join(HERE, "results")
 CFG = json.load(open(os.path.join(HERE, "vehicles.json")))
 EL = CFG["electric"]
 MISSIONS = ["timber_empty", "timber_loaded", "urban_bus", "coach"]
+_s = os.path.join(HERE, "consumption_summary.json")
+if os.path.exists(_s) and json.load(open(_s))[0].get("engine_map") == "measured":
+    ENGINE_MAP_NOTE = ("Engine map: MEASURED on a test bench, 13 L heavy-duty diesel engine, 176 operating points, best brake efficiency 44 % "
+                       "(BSFC 191 g/kWh); fuel flow interpolated in speed and torque. Same map for HVO100 and the hydrogen engine (assumption); "
+                       "buses use it at equal BMEP, scaled by displacement. Full-load curve from the Volvo D13K540 fact sheet.")
+else:
+    ENGINE_MAP_NOTE = ("Engine map: semi-empirical, 12.8 L Volvo D13K540, peak brake efficiency 50 % (assumption); "
+                       "buses use the same map scaled by power.")
+_M = CFG["missions"]
+_pax = lambda t: f"Urban bus" if t == "urban_bus" else "Coach"
 TITLES = {"timber_empty": "Timber truck, empty leg (20 t)", "timber_loaded": "Timber truck, loaded leg (74 t)",
-          "urban_bus": "Urban bus (14.7 t)", "coach": "Coach (17.2 t)"}
+          **{t: f"{_pax(t)} ({_M[t]['n_pax']} passengers)" for t in ("urban_bus", "coach")}}
 BOLD, BLUE = Font(name="Arial", size=10, bold=True), Font(name="Arial", size=10, color="0000FF")
 HEAD = PatternFill("solid", fgColor="D9E1F2")
 BASE = ["s_m", "t_s", "dt_drive_s", "dwell_s", "v_kmh", "a_mps2", "grade_pct", "surface", "F_wheel_N", "P_wheel_kW",
-        "E_wheel_traction_kWh", "E_wheel_braking_kWh"]
+        "E_wheel_traction_kWh", "E_wheel_braking_kWh",
+        "a_brake_mps2", "curve_radius_m", "a_lat_mps2", "F_lat_N"]
 ICE = ["gear", "clutch_slip", "n_rpm", "T_engine_Nm", "P_engine_kW", "P_aux_kW", "P_driveline_loss_kW", "eta_engine",
-       "E_fuel_MJ", "E_fuel_idle_MJ"]
+       "E_fuel_MJ", "E_fuel_idle_MJ", "E_friction_brake_kWh"]
 UNITS = {"s_m": "position at step start [m]", "t_s": "time at step start [s]", "dt_drive_s": "driving time of the step [s]",
          "dwell_s": "standstill time at this point [s]", "v_kmh": "mean speed [km/h]", "a_mps2": "acceleration [m/s2]",
          "grade_pct": "road grade [%]", "surface": "road surface", "F_wheel_N": "wheel force [N]", "P_wheel_kW": "wheel power [kW]",
@@ -39,7 +50,10 @@ UNITS = {"s_m": "position at step start [m]", "t_s": "time at step start [s]", "
          "motor_torque_frac": "motor torque / max torque [-]", "motor_speed_frac": "motor speed / base speed [-]",
          "P_motor_el_kW": "motor electric power at the DC bus, negative = regeneration [kW]",
          "E_motor_el_kWh": "electricity to the motor [kWh]", "E_regen_el_kWh": "electricity regenerated [kWh]",
-         "E_friction_brake_kWh": "braking work left to the friction brakes [kWh]", "E_aux_kWh": "auxiliaries [kWh]",
+         "E_friction_brake_kWh": "braking work left to the friction brakes [kWh]",
+         "a_brake_mps2": "deceleration supplied by the brakes, friction + regeneration (-F_wheel / m_eff) [m/s2]",
+         "curve_radius_m": "curve radius [m], 0 = straight road", "a_lat_mps2": "lateral acceleration v^2/R [m/s2]",
+         "F_lat_N": "lateral force on all tyres, m v^2/R [N]", "E_aux_kWh": "auxiliaries [kWh]",
          "P_battery_kW": "battery power, + = discharge [kW]", "E_battery_kWh": "battery energy at the terminals, + = discharge [kWh]",
          "E_battery_loss_kWh": "battery internal loss [kWh]", "SOC": "battery state of charge at step end [-]",
          "E_battery_cum_kWh": "cumulative battery energy at the terminals [kWh]", "power_deficit": "1 = demand above the powertrain limit",
@@ -59,7 +73,7 @@ def read(name):
 
 
 def ice_rows(tag, fuel):
-    rows = read(f"consumption_{tag}.csv")
+    rows = read(f"consumption_h2ice_{tag}.csv" if fuel == "h2ice" else f"consumption_{tag}.csv")
     cum = 0.0
     for r in rows:
         r["E_wheel_traction_kWh"] = round(max(r["F_wheel_N"], 0) * 10 / 3.6e6, 6)
@@ -117,7 +131,12 @@ def build(name, title, cols, loader, inputs, ext, der, notes):
         for j, tag in enumerate(MISSIONS):
             v = val[tag] if isinstance(val, dict) else val
             ws.cell(r, 3 + j, v).font = BLUE
-        if isinstance(val, dict):
+            if isinstance(v, (int, float)) and abs(v) >= 100:
+                ws.cell(r, 3 + j).number_format = "#,##0"
+        if isinstance(val, dict) and "_trip" in val:
+            ws.cell(r, 7, val["_trip"]).font = BLUE
+            ws.cell(r, 7).number_format = "#,##0"
+        elif isinstance(val, dict):
             if val[MISSIONS[0]] == val[MISSIONS[1]]:
                 ws.cell(r, 7, val[MISSIONS[0]]).font = BLUE
         else:
@@ -177,14 +196,41 @@ COMMON_DER = [("vmean", "Mean speed", "km/h", lambda c: f"={c('km')}/({c('min')}
               ("brk_km", "Braking work at the wheels", "kWh/km", lambda c: f"={c('brk')}/{c('km')}", "0.000")]
 GENERAL = ["MODEL", "Backward vehicle simulation on 100 km distance-based mission cycles (10 m steps), see README.md.",
            "Wheel force = inertia + grade + rolling resistance + aerodynamic drag, same masses and resistances for every powertrain.",
-           "The mass penalty of batteries and hydrogen tanks is NOT included yet (same vehicle mass as the diesel case): assumption to revisit for the LCA functional unit (payload).",
+           "Mass penalty: battery-electric, fuel cell and hydrogen-engine vehicles carry an extra mass (battery / hydrogen storage minus the removed diesel parts, see MASS PENALTY); diesel and HVO100 use the diesel vehicle mass.",
+           "Timber loaded leg: gross mass kept at the Swedish BK4 limit of 74 t for every powertrain, so the extra mass reduces the payload (row 'Payload' = timber delivered per round trip).",
+           "OPEN ISSUE, power-to-mass rule: motors are still sized as 'same power as the diesel engine'; with the mass penalty some steps exceed the limit (see vehicles.json > power_to_mass_rule).",
            "S = sourced value, D = derived from sources, A = assumption, to be confirmed with manufacturer data."]
+
+
+def mass_inputs(kind):
+    """Input rows on the Summary sheet: extra mass, simulated mass, payload (read from the run summaries)."""
+    if kind in ("bev", "fcev"):
+        s = {r["mission"]: r for r in json.load(open(os.path.join(HERE, "consumption_summary_electric.json"))) if r["powertrain"] == kind}
+        g = lambda t, k: s[t][k]
+    else:
+        s = {r["mission"]: r for r in json.load(open(os.path.join(HERE, "consumption_summary.json")))}
+        g = lambda t, k: s[t]["h2ice_" + k] if kind == "h2ice" else s[t][k]
+    pay = lambda t: "" if g(t, "payload_kg") is None else g(t, "payload_kg")
+    return [("dm", "Extra mass vs the diesel vehicle", "kg", {t: g(t, "extra_mass_kg") for t in MISSIONS}, "vehicles.json, mass_breakdown_kg (see Notes, MASS PENALTY)"),
+            ("msim", "Simulated vehicle mass", "kg", {t: g(t, "mass_kg") for t in MISSIONS}, "mission mass + extra mass, capped at max_gross_kg (74 t, BK4)"),
+            ("pay", "Payload = timber delivered per round trip (loaded leg)", "kg", {**{t: pay(t) for t in MISSIONS}, "_trip": pay("timber_loaded")},
+             "74 t gross (BK4) - 20 t tare - extra mass; round-trip column = timber delivered per cycle"),
+            ("npax", "Passengers on board (buses)", "-", {t: CFG["missions"][t].get("n_pax", "") for t in MISSIONS},
+             "vehicles.json, missions > n_pax (base = Swedish average; see pax_note)")]
+
+
+def h2ice_mass_notes():
+    v = CFG["vehicles"]
+    return ["", "MASS PENALTY (hydrogen engine)", EL["mass_method"]] + [
+        f"{k} h2ice: +{v[k]['h2ice_mass']['extra_mass_kg']} kg (range {v[k]['h2ice_mass']['mass_range_kg'][0]} to {v[k]['h2ice_mass']['mass_range_kg'][1]}). "
+        + "; ".join(f"{a} {b:+d}" for a, b in v[k]['h2ice_mass']['mass_breakdown_kg'].items()) + ". " + v[k]['h2ice_mass']['mass_note']
+        for k in v if "h2ice_mass" in v[k]] + ["SOURCES"] + [f"[{k}] {s}" for k, s in EL["mass_sources"].items()]
 
 
 def ice_notes(extra):
     v = CFG["vehicles"]
     return GENERAL + ["", "ENGINE POWERTRAIN", "Cycle -> I-Shift 12-speed (direct drive) -> engine map -> fuel. Gear = feasible gear with the lowest fuel use.",
-                      "Engine map: semi-empirical, 12.8 L Volvo D13K540, peak brake efficiency 50 % (assumption); buses use the same map scaled by power.",
+                      ENGINE_MAP_NOTE,
                       "Stops: engine idles (no start-stop). Overrun: fuel cut-off."] + extra + \
         ["", "VEHICLE NOTES"] + [f"{k}: {v[k]['notes']}" for k in v]
 
@@ -200,6 +246,10 @@ def el_notes(kind):
               "Energy management: fuel cell power = filtered DC-bus demand (60 s) + correction on the battery state of charge, between 10 % and 100 % of rated power, ramp 10 %/s; it switches off when the request falls below 5 %.",
               "Hydrogen is corrected for the difference in battery state of charge between start and end: correction = battery energy change x raw hydrogen / (DC/DC output energy x battery charge efficiency).",
               "Mid-life value = mean of new (BOL) and aged (EOL) fuel cell."]
+    n += ["", "MASS PENALTY", e["mass_method"]] + [
+        f"{k} {kind}: +{ve[k][kind]['extra_mass_kg']} kg (range {ve[k][kind]['mass_range_kg'][0]} to {ve[k][kind]['mass_range_kg'][1]}). "
+        + "; ".join(f"{a} {b:+d}" for a, b in ve[k][kind]['mass_breakdown_kg'].items()) + ". " + ve[k][kind]['mass_note'] for k in ve]
+    n += ["SOURCES"] + [f"[{k}] {v}" for k, v in e["mass_sources"].items()]
     n += ["", "VEHICLE NOTES"] + [f"{k}: {ve[k]['note']}" for k in ve]
     n += ["", "VALIDATION BENCHMARKS (literature)",
           "Fuel cell buses, measured: 7.7 kg H2/100 km for 12 m buses, 8.9 for 18 m (JIVE 2 final results, 2025); JIVE site averages 6.1-9.1.",
@@ -215,7 +265,7 @@ def main():
         cols = BASE + ICE + [fuel + "_g", fuel + "_cum_kg"]
         build(name, f"mini-VECTO - consumption, {label} engine", cols, lambda t, fuel=fuel: ice_rows(t, fuel),
               [("lhv", "Lower heating value", "MJ/kg", F[fuel]["LHV_MJ_per_kg"], "vehicles.json, fuels"),
-               ("rho", "Density", "kg/l", F[fuel]["density_kg_per_l"], "vehicles.json, fuels")],
+               ("rho", "Density", "kg/l", F[fuel]["density_kg_per_l"], "vehicles.json, fuels")] + mass_inputs("diesel"),
               COMMON_EXT + [("efuel", "Fuel energy", "MJ", lambda R: f"=SUM({R('E_fuel_MJ')})"),
                             ("eidle", "of which idling at stops", "MJ", lambda R: f"=SUM({R('E_fuel_idle_MJ')})"),
                             ("kg", "Fuel mass", "kg", lambda R, fuel=fuel: f"=SUM({R(fuel + '_g')})/1000")],
@@ -230,7 +280,7 @@ def main():
     build("H2-ICE", "mini-VECTO - consumption, hydrogen engine (HPDI with HVO100 pilot)", cols, lambda t: ice_rows(t, "h2ice"),
           [("lhv", "Lower heating value, hydrogen", "MJ/kg", F["h2"]["LHV_MJ_per_kg"], "vehicles.json, fuels"),
            ("lhvp", "Lower heating value, pilot HVO100", "MJ/kg", F["hvo100"]["LHV_MJ_per_kg"], "vehicles.json, fuels"),
-           ("rho", "Density, pilot HVO100", "kg/l", F["hvo100"]["density_kg_per_l"], "vehicles.json, fuels")],
+           ("rho", "Density, pilot HVO100", "kg/l", F["hvo100"]["density_kg_per_l"], "vehicles.json, fuels")] + mass_inputs("h2ice"),
           COMMON_EXT + [("efuel", "Fuel energy (hydrogen + pilot)", "MJ", lambda R: f"=SUM({R('E_fuel_MJ')})"),
                         ("h2", "Hydrogen", "kg", lambda R: f"=SUM({R('h2_g')})/1000"),
                         ("pil", "Pilot HVO100", "kg", lambda R: f"=SUM({R('pilot_hvo_g')})/1000")],
@@ -239,7 +289,7 @@ def main():
            ("pilsh", "Pilot share of fuel energy", "-", lambda c: f"={c('pil')}*{c('lhvp')}/{c('efuel')}", "0.0%"),
            ("kwhkm", "Fuel energy", "kWh/km", lambda c: f"={c('efuel')}/3.6/{c('km')}", "0.000")] + COMMON_DER +
           [("ttw", "Tank-to-wheel efficiency", "-", lambda c: f"={c('trac')}/({c('efuel')}/3.6)", "0.0%")],
-          ice_notes(["Same engine map as diesel (assumption; AVL reports 49.1-50.1 % brake efficiency for a hydrogen HPDI engine). " + CFG["hpdi"]["note"]]))
+          ice_notes(["Same engine map as diesel (assumption; AVL reports 49.1-50.1 % brake efficiency for a hydrogen HPDI engine). " + CFG["hpdi"]["note"]] + h2ice_mass_notes()))
     # ------------------------------------------------ electric
     ve = EL["vehicles"]
     veh = {t: ve[CFG["missions"][t]["vehicle"]] for t in MISSIONS}
@@ -257,7 +307,7 @@ def main():
            ("soc0", "State of charge at start", "-", {t: veh[t]["bev"]["soc_start"] for t in MISSIONS}, "assumption"),
            ("chg", "Charger efficiency", "-", b["charger_efficiency"], "Skogforsk Arbetsrapport 1176-2023"),
            ("bchg", "Battery efficiency while charging", "-", round(1 - b["loss_at_1C"] * b["depot_charge_C_rate"], 4),
-            "assumption: 3 % loss at 1C, charging at 0.6C")],
+            "assumption: 3 % loss at 1C, charging at 0.6C")] + mass_inputs("bev"),
           el_ext + [("bt", "Battery energy at the terminals (net of regeneration)", "kWh", lambda R: f"=SUM({R('E_battery_kWh')})"),
                     ("bl", "Battery internal loss", "kWh", lambda R: f"=SUM({R('E_battery_loss_kWh')})"),
                     ("soc_end", "State of charge at the end", "-", lambda R: f"={R.last('SOC')}")],
@@ -277,7 +327,7 @@ def main():
            ("soc0", "State of charge at start", "-", f["ems"]["soc_ref"], "assumption"),
            ("lhv", "Lower heating value, hydrogen", "kWh/kg", round(120 / 3.6, 4), "120 MJ/kg"),
            ("bchg", "Battery efficiency while charging", "-", 1 - b["loss_at_1C"], "assumption: 3 % loss at 1C"),
-           ("purge", "Purge share of hydrogen (already inside the consumption)", "-", f["purge_share_of_h2"], "assumption")],
+           ("purge", "Purge share of hydrogen (already inside the consumption)", "-", f["purge_share_of_h2"], "assumption")] + mass_inputs("fcev"),
           el_ext + [("efc", "Fuel cell net energy", "kWh", lambda R: f"=SUM({R('E_fc_net_kWh')})"),
                     ("edc", "Energy after the DC/DC converter", "kWh", lambda R: f"=SUM({R('E_dcdc_out_kWh')})"),
                     ("h2b", "Hydrogen, new fuel cell (BOL), before battery correction", "kg", lambda R: f"=SUM({R('h2_g_BOL')})/1000"),

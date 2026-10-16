@@ -86,10 +86,12 @@ class Route:
         z = np.concatenate([[0], np.cumsum(grade[:-1]*DS)])
         # speed limit incl. curves and local restrictions
         vlim = lim/3.6
+        radius = np.full(n, np.inf)                          # curve radius per step [m], inf = straight
         for (sc, R) in self.curves:
             vc = v_curve(R)
             m = np.abs(s - sc) <= max(30, R*0.3)            # curve arc length ~ 0.6 R
             vlim[m] = np.minimum(vlim[m], vc)
+            radius[m] = np.minimum(radius[m], R)
         for (a0, a1, l) in self.slow:
             m = (s >= a0) & (s <= a1)
             vlim[m] = np.minimum(vlim[m], l/3.6)
@@ -99,7 +101,7 @@ class Route:
             vlim[i] = 0.0; dwell[i] += d
         vlim[0] = 0.0; vlim[-1] = 0.0
         self.s, self.vlim, self.grade, self.z, self.surf, self.rc, self.dwell = s, vlim, grade, z, surf, rc, dwell
-        self.limit_kmh = lim
+        self.limit_kmh = lim; self.radius = radius
         return self
 
     def reversed(self, name):
@@ -107,7 +109,7 @@ class Route:
         r.s = self.s.copy()
         r.vlim = self.vlim[::-1].copy(); r.grade = -self.grade[::-1].copy()
         r.z = self.z[::-1].copy(); r.surf = self.surf[::-1].copy(); r.rc = self.rc[::-1].copy()
-        r.dwell = self.dwell[::-1].copy(); r.limit_kmh = self.limit_kmh[::-1].copy()
+        r.dwell = self.dwell[::-1].copy(); r.limit_kmh = self.limit_kmh[::-1].copy(); r.radius = self.radius[::-1].copy()
         return r
 
 # ------------------------------------------------------------------ vehicle for power limit
@@ -204,11 +206,12 @@ def export(route, v, t, a, tag):
     with open(os.path.join(OUT, f"cycle_{tag}_distance.csv"), "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["s_m", "v_target_kmh", "v_sim_kmh", "a_sim_mps2", "grade_pct", "altitude_m",
-                    "surface", "road_class", "stop_dwell_s", "t_s"])
+                    "surface", "road_class", "stop_dwell_s", "t_s", "curve_radius_m"])
         for i in range(len(route.s)):
             w.writerow([int(route.s[i]), round(min(route.vlim[i], 40)*3.6, 1), round(v[i]*3.6, 2), round(a[i], 3),
                         round(route.grade[i]*100, 2), round(route.z[i], 1), route.surf[i], route.rc[i],
-                        round(route.dwell[i], 1), round(t[i], 1)])
+                        round(route.dwell[i], 1), round(t[i], 1),
+                        round(route.radius[i], 1) if np.isfinite(route.radius[i]) else 0])   # 0 = straight road
     T, sT, vT, gT = resample_1hz(route, v, t)
     with open(os.path.join(OUT, f"cycle_{tag}_1Hz.csv"), "w", newline="") as f:
         w = csv.writer(f)
@@ -226,12 +229,19 @@ def p_wheel_max(vehicle, fallback):
     v = _VJ["vehicles"][vehicle]; gb = _VJ["gearboxes"][v["gearbox"]]
     return (v["engine"]["rated_power_kW"] - v["aux_mech_kW"])*1e3*gb["eta_indirect"]*v["eta_axle"]*0.97
 
+def gross_mass(c):
+    """Mission mass without powertrain extra mass: curb + passengers (buses) or mass_kg (timber truck)."""
+    if "curb_kg" in c:
+        return c["curb_kg"] + c["n_pax"] * c["kg_per_pax"]
+    return c["mass_kg"]
+
+
 def mp(tag, m, rot, cda, cr_scale=1.0):
     """Mass, rotating mass, CdA and rolling-resistance scale of a mission, read from vehicles.json ("missions")."""
     if _VJ is None:
         return m, rot, cda, cr_scale
     c = _VJ["missions"][tag]
-    return c["mass_kg"], c["rot_mass_kg"], c["CdA_m2"], c["cr_asphalt"]/CR["asphalt"]
+    return gross_mass(c), c["rot_mass_kg"], c["CdA_m2"], c["cr_asphalt"]/CR["asphalt"]
 
 # ================================================================== MISSIONS
 # ---------------- Timber truck: mill -> forest (empty), forest -> mill (loaded), 100 km per leg

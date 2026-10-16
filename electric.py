@@ -156,9 +156,36 @@ class FuelCell:
 
 
 # ============================================================== cycle -> wheel
+def gross_mass(c):
+    """Mission mass without powertrain extra mass: curb + passengers (buses) or mass_kg (timber truck)."""
+    if "curb_kg" in c:
+        return c["curb_kg"] + c["n_pax"] * c["kg_per_pax"]
+    return c["mass_kg"]
+
+
+def lateral_and_braking(r0, v, F, m, m_eff):
+    """Curve radius of the step, lateral acceleration v^2/R and lateral force m v^2/R (whole vehicle, all tyres),
+    braking deceleration supplied by the brakes (friction + regeneration) = -F_wheel / m_eff when F_wheel < 0."""
+    R = float(r0.get("curve_radius_m") or 0.0)            # 0 = straight road
+    a_lat = v * v / R if R > 0 else 0.0
+    return {"curve_radius_m": round(R, 1), "a_lat_mps2": round(a_lat, 3), "F_lat_N": round(m * a_lat),
+            "a_brake_mps2": round(max(-F, 0.0) / m_eff, 3)}
+
+
+def mission_mass(mcfg, extra=0.0):
+    """Simulated mass and payload of a mission. extra = powertrain mass on top of the diesel vehicle.
+    With max_gross_kg (legal gross limit, e.g. timber_loaded at the Swedish BK4 74 t) the gross mass stays at the
+    limit and the extra mass reduces the payload; payload_kg = gross - tare_kg - extra (None if tare_kg is not given)."""
+    m = gross_mass(mcfg) + extra
+    if "max_gross_kg" in mcfg:
+        m = min(m, mcfg["max_gross_kg"])
+    payload = m - mcfg["tare_kg"] - extra if "tare_kg" in mcfg else None
+    return m, payload
+
+
 def wheel_steps(tag, extra_mass=0.0):
     mcfg = CFG["missions"][tag]
-    m = mcfg["mass_kg"] + extra_mass                 # extra_mass_kg of the powertrain (battery, tanks), default 0
+    m, _ = mission_mass(mcfg, extra_mass)           # extra_mass_kg of the powertrain (battery, tanks), capped at max_gross_kg
     m_eff = m + mcfg["rot_mass_kg"]
     rows = list(csv.DictReader(open(os.path.join(HERE, f"cycle_{tag}_distance.csv"))))
     for i in range(len(rows) - 1):
@@ -173,9 +200,9 @@ def wheel_steps(tag, extra_mass=0.0):
         dt = max(float(r1["t_s"]) - float(r0["t_s"]) - dwell, 1e-6)
         yield {"s_m": int(float(r0["s_m"])), "t_s": round(float(r0["t_s"]), 1), "dt_drive_s": round(dt, 2), "dwell_s": dwell,
                "v_kmh": round(vm * 3.6, 2), "a_mps2": round(a, 3), "grade_pct": round(grade * 100, 2), "surface": r0["surface"],
-               "F_wheel_N": round(F), "P_wheel_kW": round(F * vm / 1e3, 2),
+               "F_wheel_N": round(F), "P_wheel_kW": round(F * vm / 1e3, 2), **lateral_and_braking(r0, vm, F, m, m_eff),
                "E_wheel_traction_kWh": round(max(F, 0) * DS / 3.6e6, 6), "E_wheel_braking_kWh": round(max(-F, 0) * DS / 3.6e6, 6),
-               "_v": vm, "_F": F, "_dt": dt}
+               "_v": vm, "_F": F, "_dt": dt, "_v0": v0, "_v1": v1}
 
 
 def run(tag, kind):
@@ -185,7 +212,9 @@ def run(tag, kind):
     drv = EDrive(ve, CFG["vehicles"][vname]["eta_axle"])
     aux = ve["aux_el_kW"]
     extra = ve[kind].get("extra_mass_kg", 0.0)
-    m_drv = (mcfg["mass_kg"] + extra) * ve["driven_axle_load_share"][tag]
+    m_sim, payload = mission_mass(mcfg, extra)
+    m_eff_sim = m_sim + mcfg["rot_mass_kg"]
+    m_drv = m_sim * ve["driven_axle_load_share"][tag]
     if kind == "bev":
         b = ve["bev"]; bat = Battery(b["battery_kWh"], b["soc_start"], b["C_discharge"], b["C_charge"])
         soc_max, soc_min = b["soc_start"], b["soc_min"]
@@ -198,6 +227,13 @@ def run(tag, kind):
     out, cum, n_inf = [], 0.0, 0
     for st in wheel_steps(tag, extra):
         v, F, dt = st.pop("_v"), st.pop("_F"), st.pop("_dt")
+        v0s, v1s = st.pop("_v0"), st.pop("_v1")
+        # Braking to a standstill: below the regeneration cut-off speed (regen_v_cut_kmh) the friction brakes stop the
+        # vehicle. With 10 m steps the last braking step has a mean speed above the cut-off, so the kinetic energy below
+        # the cut-off, 1/2 m_eff v_cut^2, is taken off the regenerable braking force of that step (friction brakes).
+        F_reg = F
+        if F < 0 and v1s < 0.05:
+            F_reg = min(F + 0.5 * m_eff_sim * min(v0s, drv.v_cut) ** 2 / DS, 0.0)
         acc = {k: 0.0 for k in ["mot", "regen", "aux", "bat", "loss", "fc", "dc", "h2b", "h2e", "fric"]}
         d = {"gear": 0, "t": 0.0, "w": 0.0, "p_el": 0.0, "f_regen": 0.0}
         deficit, p_fc_drive, p_bat_drive = 0, 0.0, 0.0
@@ -205,7 +241,10 @@ def run(tag, kind):
             if tt <= 0:
                 continue
             if sub == "drive" and v >= 0.05:
-                d = drv.step(v, F, m_drv)
+                if F < 0 and F_reg >= 0:                         # whole step on the friction brakes
+                    d = {"gear": 0, "t": 0.0, "w": 0.0, "p_el": 0.0, "f_regen": 0.0}
+                else:
+                    d = drv.step(v, F_reg, m_drv)
                 if d.get("infeasible"):
                     deficit = 1
             p_mot = d["p_el"] if sub == "drive" and v >= 0.05 else 0.0
@@ -276,6 +315,8 @@ def run(tag, kind):
            "motor_el_kWh_per_km": round(S("E_motor_el_kWh") / km, 3), "aux_kWh_per_km": round(S("E_aux_kWh") / km, 3),
            "drive_eff_wheel_over_motor_el_pct": round(S("E_wheel_traction_kWh") / S("E_motor_el_kWh") * 100, 1),
            "soc_start": round(soc0, 4), "soc_end": round(bat.soc, 4), "power_deficit_steps": n_inf}
+    res.update({"mass_kg": m_sim, "extra_mass_kg": extra, "payload_kg": payload, "n_pax": mcfg.get("n_pax"),
+                "timber_t_per_round_trip": round(payload / 1000, 2) if payload is not None else None})
     if kind == "bev":
         e_chem = (soc0 - bat.soc) * bat.E
         eta_chg = EL["battery"]["charger_efficiency"] * (1 - bat.r * EL["battery"]["depot_charge_C_rate"])

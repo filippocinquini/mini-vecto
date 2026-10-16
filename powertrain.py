@@ -6,14 +6,23 @@ Chain, per 10 m step of each cycle_<mission>_distance.csv:
     -> wheel force and power           F = m_eff a + m g sin(a) + Cr m g cos(a) + 1/2 rho CdA v^2
     -> gearbox + axle (I-Shift ratios)  engine speed n and torque T for every gear
     -> gear choice                      the feasible gear with the lowest fuel use ("ideal" shifting)
-    -> engine map                       fuel power = indicated power / indicated efficiency
-                                        (same semi-empirical 13 L map as maps.py, 50 % peak)
+    -> engine map                       two options, chosen in vehicles.json > "engine_map" > "source":
+                                        "measured"  test-bench map of a 13 L diesel engine (176 points, fuel flow
+                                                    interpolated in speed and torque), best efficiency 44 %
+                                        "model"     semi-empirical map, fuel power = indicated power / indicated
+                                                    efficiency, scaled to a 50 % peak
+                                        The measured map (data/engine_map_measured.csv) was provided by AB Volvo
+                                        for the course; if the file is missing, the model map is used.
     -> auxiliaries                      constant mechanical load on the engine, also at idle
     -> fuel                             diesel, HVO100, or H2 + HVO pilot (H2-ICE HPDI)
 Stops: the engine idles for the dwell time (no start-stop). Overrun (engine dragged): fuel cut-off.
 
 Inputs : vehicles.json, cycle_<mission>_distance.csv
-Outputs: consumption_<mission>.csv  one row per step, energy and fuel mass per fuel option
+Mass  : diesel and HVO100 run at the mission mass; the hydrogen engine runs again with the mass of its tanks
+         (vehicles.json > vehicles > vehicle > h2ice_mass). Missions with max_gross_kg keep the gross at the limit
+         and the extra mass reduces the payload (see mission_mass).
+Outputs: consumption_<mission>.csv  one row per step, energy and fuel mass per fuel option (h2ice columns at the diesel mass)
+         consumption_h2ice_<mission>.csv  the same for the hydrogen engine at its own mass
          consumption_summary.csv / .json  totals per mission and fuel
 Usage  : python3 powertrain.py
 """
@@ -82,6 +91,86 @@ def _calibrate():
 ETA_I_SCALE = _calibrate()
 
 
+# ============================================================== measured engine map
+class MeasuredMap:
+    """Fuel flow [g/s] measured on the test bench at (speed, torque) points lying on constant-speed lines.
+    Lookup: linear in torque along the two neighbouring speed lines, then linear in speed.
+    Above the last measured torque of a line the last slope is kept (the fuel line is almost straight there)."""
+
+    def __init__(self, path, lhv_MJ_per_kg, line_step_rpm=100, min_points=4):
+        self.lhv = lhv_MJ_per_kg
+        lines, self.points = {}, []
+        for r in csv.DictReader(open(path)):
+            n, T, f = float(r["n_rpm"]), max(float(r["T_Nm"]), 0.0), float(r["fuel_g_per_s"])
+            self.points.append((n, T, f))
+            lines.setdefault(round(n / line_step_rpm) * line_step_rpm, []).append((T, f, n))
+        self.lines = {}
+        for n_nom, pts in lines.items():
+            if any(abs(p[2] - n_nom) > 10 for p in pts):          # points between two lines (1450, 1850 rpm): kept
+                pts = [p for p in pts if abs(p[2] - n_nom) <= 10]  # only for checking the interpolation
+            pts.sort()
+            merged = []
+            for T, f, _ in pts:                                    # repeated points: mean
+                if merged and T - merged[-1][0] < 5:
+                    merged[-1] = (0.5 * (merged[-1][0] + T), 0.5 * (merged[-1][1] + f))
+                else:
+                    merged.append((T, f))
+            if len(merged) >= min_points:
+                self.lines[n_nom] = ([p[0] for p in merged], [p[1] for p in merged])
+        self.speeds = sorted(self.lines)
+
+    def _line(self, n_nom, T):
+        ts, fs = self.lines[n_nom]
+        if T >= ts[-1]:
+            return fs[-1] + (T - ts[-1]) * (fs[-1] - fs[-2]) / (ts[-1] - ts[-2])
+        return interp(T, ts, fs)
+
+    def _bracket(self, n):
+        s = self.speeds
+        n = min(max(n, s[0]), s[-1])
+        for i in range(1, len(s)):
+            if n <= s[i]:
+                return s[i-1], s[i], (n - s[i-1]) / (s[i] - s[i-1])
+        return s[-2], s[-1], 1.0
+
+    def fuel_flow(self, n, T):
+        """Fuel mass flow [g/s] of the measured engine at speed n [rpm] and torque T [Nm]."""
+        lo, hi, t = self._bracket(n)
+        return (1 - t) * self._line(lo, T) + t * self._line(hi, T)
+
+    def t_measured_max(self, n):
+        lo, hi, t = self._bracket(n)
+        return (1 - t) * self.lines[lo][0][-1] + t * self.lines[hi][0][-1]
+
+    def best_point(self):
+        return max((T * w(n) / (f * self.lhv * 1e3), n, T) for n, T, f in self.points if T > 50)
+
+
+MAP, MAP_INFO = None, {"source": "model", "label": "semi-empirical map, 50 % peak brake efficiency"}
+
+
+def select_engine_map(source=None):
+    """Choose the engine map: 'measured' or 'model'. Default: vehicles.json > engine_map > source,
+    overridden by the environment variable MINIVECTO_ENGINE_MAP. Falls back to 'model' if the file is missing."""
+    global MAP, MAP_INFO
+    cfg = CFG.get("engine_map", {})
+    source = source or os.environ.get("MINIVECTO_ENGINE_MAP") or cfg.get("source", "model")
+    MAP, MAP_INFO = None, {"source": "model", "label": "semi-empirical map, 50 % peak brake efficiency"}
+    if source == "measured":
+        path = os.path.join(HERE, cfg.get("file", "data/engine_map_measured.csv"))
+        if os.path.exists(path):
+            MAP = MeasuredMap(path, cfg.get("test_fuel_LHV_MJ_per_kg", 42.7))
+            e, n, T = MAP.best_point()
+            MAP_INFO = {"source": "measured", "label": f"measured map, {len(MAP.points)} points, best brake efficiency "
+                                                       f"{e*100:.1f} % at {n:.0f} rpm and {T:.0f} Nm"}
+        else:
+            MAP_INFO["label"] += " (measured map file not found: " + cfg.get("file", "") + ")"
+            print("NOTE: measured engine map not found, using the semi-empirical map instead.")
+    elif source != "model":
+        raise SystemExit(f"engine_map source must be 'measured' or 'model', not '{source}'")
+    return MAP_INFO
+
+
 class Engine:
     def __init__(self, cfg):
         self.vd = cfg["displacement_l"] / 1000
@@ -94,7 +183,10 @@ class Engine:
 
     def fuel_power(self, n, T):
         """Chemical fuel power [W] at speed n [rpm] and brake torque T [Nm] (T >= 0).
-        P_fuel = P_indicated / eta_i, with P_ind = (BMEP + FMEP) Vd n/120 (4-stroke)."""
+        Measured map: fuel flow read at the same BMEP (torque / k) and scaled with displacement (x k).
+        Model map: P_fuel = P_indicated / eta_i, with P_ind = (BMEP + FMEP) Vd n/120 (4-stroke)."""
+        if MAP is not None:
+            return self.k * MAP.fuel_flow(n, T / self.k) * MAP.lhv * 1e3
         bmep = 4 * math.pi * T / self.vd / 1e5
         imep = bmep + fmep(n)
         p_ind = imep * 1e5 * self.vd * n / 120
@@ -175,17 +267,45 @@ def load_cycle(tag):
     return rows
 
 
-def run(tag):
+def gross_mass(c):
+    """Mission mass without powertrain extra mass: curb + passengers (buses) or mass_kg (timber truck)."""
+    if "curb_kg" in c:
+        return c["curb_kg"] + c["n_pax"] * c["kg_per_pax"]
+    return c["mass_kg"]
+
+
+def lateral_and_braking(r0, v, F, m, m_eff):
+    """Curve radius of the step, lateral acceleration v^2/R and lateral force m v^2/R (whole vehicle, all tyres),
+    braking deceleration supplied by the brakes (friction + regeneration) = -F_wheel / m_eff when F_wheel < 0."""
+    R = float(r0.get("curve_radius_m") or 0.0)            # 0 = straight road
+    a_lat = v * v / R if R > 0 else 0.0
+    return {"curve_radius_m": round(R, 1), "a_lat_mps2": round(a_lat, 3), "F_lat_N": round(m * a_lat),
+            "a_brake_mps2": round(max(-F, 0.0) / m_eff, 3)}
+
+
+def mission_mass(mcfg, extra=0.0):
+    """Simulated mass and payload of a mission. extra = powertrain mass on top of the diesel vehicle.
+    With max_gross_kg (legal gross limit, e.g. timber_loaded at the Swedish BK4 74 t) the gross mass stays at the
+    limit and the extra mass reduces the payload; payload_kg = gross - tare_kg - extra (None if tare_kg is not given)."""
+    m = gross_mass(mcfg) + extra
+    if "max_gross_kg" in mcfg:
+        m = min(m, mcfg["max_gross_kg"])
+    payload = m - mcfg["tare_kg"] - extra if "tare_kg" in mcfg else None
+    return m, payload
+
+
+def run(tag, write=True, extra_mass=0.0, out_name=None):
     mcfg = CFG["missions"][tag]
     vcfg = CFG["vehicles"][mcfg["vehicle"]]
     pt = Powertrain(vcfg, CFG["gearboxes"][vcfg["gearbox"]])
-    m, m_eff = mcfg["mass_kg"], mcfg["mass_kg"] + mcfg["rot_mass_kg"]
+    m, payload = mission_mass(mcfg, extra_mass)
+    m_eff = m + mcfg["rot_mass_kg"]
     rows = load_cycle(tag)
     F_ = CFG["fuels"]
     out = []
     tot = {k: 0.0 for k in ["E_fuel_MJ", "diesel_kg", "hvo_kg", "h2_kg", "pilot_hvo_kg", "E_wheel_pos_MJ",
                             "E_brake_MJ", "E_aux_MJ", "E_idle_fuel_MJ", "t_idle_s", "t_move_s", "infeasible_steps",
-                            "shifts"]}
+                            "shifts", "E_engine_MJ", "E_fuel_extrap_MJ"]}
     last_gear = None
     cum = 0.0
     for i in range(len(rows) - 1):
@@ -226,6 +346,12 @@ def run(tag):
         tot["t_move_s"] += dt
         tot["E_aux_MJ"] += (pt.aux * dt / 1e6) if vm >= 0.05 else 0.0
         e_step = e_move + e_idle                       # J of fuel energy
+        if e_move > 0:
+            tot["E_engine_MJ"] += st["T"] * w(st["n"]) * dt / 1e6
+            if MAP is not None and st["T"] / pt.eng.k > MAP.t_measured_max(st["n"]) + 1:
+                tot["E_fuel_extrap_MJ"] += e_move / 1e6      # fuel burnt above the highest measured torque
+        if e_idle > 0:
+            tot["E_engine_MJ"] += pt.aux * dwell / 1e6
         # fuel split per option
         diesel_kg = e_step / (F_["diesel"]["LHV_MJ_per_kg"] * 1e6)
         hvo_kg = e_step / (F_["hvo100"]["LHV_MJ_per_kg"] * 1e6)
@@ -246,7 +372,8 @@ def run(tag):
         out.append({
             "s_m": int(s), "t_s": round(float(r0["t_s"]), 1), "dt_drive_s": round(dt, 2), "dwell_s": dwell,
             "v_kmh": round(vm * 3.6, 2), "a_mps2": round(a, 3), "grade_pct": round(grade * 100, 2), "surface": r0["surface"],
-            "F_wheel_N": round(F), "P_wheel_kW": round(F * vm / 1e3, 2),
+            "F_wheel_N": round(F), "P_wheel_kW": round(F * vm / 1e3, 2), **lateral_and_braking(r0, vm, F, m, m_eff),
+            "E_friction_brake_kWh": round(max(-F, 0) * DS / 3.6e6, 6),     # ASSUMPTION: all braking on the friction brakes (no engine brake / retarder)
             "gear": st["gear"], "clutch_slip": int(st["slip"]), "n_rpm": round(st["n"]), "T_engine_Nm": round(st["T"], 1),
             "P_engine_kW": round(st["T"] * w(st["n"]) / 1e3, 2), "P_aux_kW": round(pt.aux / 1e3, 2),
             "P_driveline_loss_kW": round(st["loss_dl"] / 1e3, 2), "eta_engine": round(eta_eng, 4),
@@ -255,13 +382,14 @@ def run(tag):
             "h2ice_h2_g": round(h2_kg * 1e3, 4), "h2ice_pilot_hvo_g": round(pilot_kg * 1e3, 4),
             "pilot_share": round(ps_move, 4), "E_fuel_cum_MJ": round(cum / 1e6, 3),
         })
-    with open(os.path.join(HERE, f"consumption_{tag}.csv"), "w", newline="") as f:
-        wr = csv.DictWriter(f, fieldnames=list(out[0].keys()))
-        wr.writeheader(); wr.writerows(out)
+    if write:
+        with open(os.path.join(HERE, out_name or f"consumption_{tag}.csv"), "w", newline="") as f:
+            wr = csv.DictWriter(f, fieldnames=list(out[0].keys()))
+            wr.writeheader(); wr.writerows(out)
     km = float(rows[-1]["s_m"]) / 1000
     dens_d, dens_h = F_["diesel"]["density_kg_per_l"], F_["hvo100"]["density_kg_per_l"]
     res = {
-        "mission": tag, "vehicle": mcfg["vehicle"], "mass_kg": m, "km": round(km, 1),
+        "mission": tag, "vehicle": mcfg["vehicle"], "mass_kg": m, "extra_mass_kg": extra_mass, "payload_kg": payload, "n_pax": mcfg.get("n_pax"), "timber_t_per_round_trip": round(payload / 1000, 2) if payload is not None else None, "km": round(km, 1),
         "time_min": round((tot["t_move_s"] + tot["t_idle_s"]) / 60, 1),
         "fuel_energy_MJ_per_km": round(tot["E_fuel_MJ"] / km, 3),
         "fuel_energy_kWh_per_km": round(tot["E_fuel_MJ"] / km / 3.6, 3),
@@ -277,17 +405,33 @@ def run(tag):
         "idle_fuel_share_pct": round(tot["E_idle_fuel_MJ"] / max(tot["E_fuel_MJ"], 1e-9) * 100, 1),
         "idle_diesel_l_per_h": round(pt.idle(3600)[0] / (F_["diesel"]["LHV_MJ_per_kg"] * 1e6) / dens_d, 2),
         "gear_shifts": int(tot["shifts"]), "infeasible_steps": int(tot["infeasible_steps"]),
+        "mean_engine_eff_pct": round(tot["E_engine_MJ"] / max(tot["E_fuel_MJ"], 1e-9) * 100, 1),
+        "engine_map": MAP_INFO["source"],
+        "fuel_above_measured_torque_pct": round(tot["E_fuel_extrap_MJ"] / max(tot["E_fuel_MJ"], 1e-9) * 100, 1),
     }
     return res
 
 
+def merge_h2ice(r, r2):
+    """Diesel and HVO results (diesel vehicle mass) + hydrogen-engine results from its own run with h2ice extra mass."""
+    out = dict(r)
+    out["h2ice_h2_kg_per_100km_at_diesel_mass"] = r["h2ice_h2_kg_per_100km"]
+    out.update({k: v for k, v in r2.items() if k.startswith("h2ice_")})
+    out.update({"h2ice_mass_kg": r2["mass_kg"], "h2ice_extra_mass_kg": r2["extra_mass_kg"], "h2ice_payload_kg": r2["payload_kg"], "h2ice_timber_t_per_round_trip": r2["timber_t_per_round_trip"],
+                "h2ice_fuel_energy_kWh_per_km": r2["fuel_energy_kWh_per_km"], "h2ice_wheel_work_kWh_per_km": r2["wheel_work_kWh_per_km"]})
+    return out
+
+
 if __name__ == "__main__":
     CFG = json.load(open(os.path.join(HERE, "vehicles.json")))
+    print("Engine map:", select_engine_map()["label"])
     results = []
     for tag in MISSIONS:
         if not os.path.exists(os.path.join(HERE, f"cycle_{tag}_distance.csv")):
             print("skip", tag); continue
-        r = run(tag)
+        r = run(tag)                                   # diesel and HVO100 at the diesel vehicle mass
+        x = CFG["vehicles"][r["vehicle"]].get("h2ice_mass", {}).get("extra_mass_kg", 0.0)
+        r = merge_h2ice(r, run(tag, extra_mass=x, out_name=f"consumption_h2ice_{tag}.csv"))   # hydrogen engine with its tanks
         results.append(r)
         print(json.dumps(r))
     with open(os.path.join(HERE, "consumption_summary.json"), "w") as f:
@@ -297,3 +441,4 @@ if __name__ == "__main__":
         wr.writeheader(); wr.writerows(results)
 else:
     CFG = json.load(open(os.path.join(HERE, "vehicles.json")))
+    select_engine_map()
