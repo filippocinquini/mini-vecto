@@ -31,9 +31,17 @@ for ax, (tag, name) in zip(axs.flat, tags):
     dt = np.array([float(r["dt_drive_s"]) for r in rows]); ef = np.array([float(r["E_fuel_MJ"]) for r in rows])
     m = (tq > 0) & (dt > 0)
     ax.scatter(n[m], tq[m], s=np.clip(dt[m]*4, 2, 40), c="#d62728", alpha=0.25, lw=0, label="Operating points (size = time)")
+    # idle at stops (vehicle standing, clutch open): engine at n_idle, torque = auxiliary load only (powertrain.idle)
+    t_idle = sum(float(r["dwell_s"]) for r in rows)
+    if t_idle > 0:
+        n_i = veh["engine"]["n_idle_rpm"]; T_i = veh["aux_mech_kW"] * 1e3 / ptm.w(n_i)
+        ax.scatter([n_i], [T_i], s=90, marker="D", facecolor="#ff9f1c", edgecolor="#1f2d3d", lw=0.8, zorder=5,
+                   label="Idle at stops (aux load only)")
+        ax.annotate(f"idle {t_idle/60:.0f} min" if t_idle >= 60 else f"idle {t_idle:.0f} s", (n_i, T_i),
+                    xytext=(8, 8), textcoords="offset points", fontsize=8)
     w_eta = summary[tag]["mean_engine_eff_pct"]             # engine work / fuel energy, idling included
     ax.set_title(f"{name}: mean engine efficiency {w_eta:.1f} %", loc="left", fontsize=11)
-    ax.set_xlabel("Engine speed [rpm]"); ax.set_ylabel("Torque [Nm]"); ax.set_xlim(600, 2000); ax.set_ylim(0, 2750*eng.k)
+    ax.set_xlabel("Engine speed [rpm]"); ax.set_ylabel("Torque [Nm]"); ax.set_xlim(550, 2000); ax.set_ylim(0, 2750*eng.k)
 axs[0, 0].legend(loc="lower right", fontsize=9)
 fig.colorbar(cs, ax=axs, shrink=0.6, label="Brake efficiency")
 fig.suptitle("Engine map: " + ptm.MAP_INFO["label"], x=0.125, y=0.94, ha="left", fontsize=11)

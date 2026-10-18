@@ -46,10 +46,10 @@ The run takes under a minute and prints a table like this (measured engine map, 
 ```
 Mean consumption per 100 km
 mission         Diesel l   HVO l  H2-ICE kg   FCEV kg new/aged  BEV kWh (battery)
-timber_empty        33.3    34.6        9.3          7.6 / 9.7                154
-timber_loaded       75.1    78.0       21.6        17.3 / 22.1                278
-urban_bus           42.4    44.1       11.9          6.6 / 8.4                122
-coach               25.1    26.1        7.0          5.9 / 7.6                115
+timber_empty        33.3    34.6        9.3          7.5 / 9.6                154
+timber_loaded       75.1    78.0       21.6        16.0 / 20.3                278
+urban_bus           42.4    44.1       11.9          6.5 / 8.4                122
+coach               25.1    26.1        7.0          5.9 / 7.5                115
 ```
 
 On macOS or Windows you can also double click `RUN_MODEL_mac.command` or `RUN_MODEL_windows.bat`. A step-by-step guide is in [docs/QUICK_START.pdf](docs/QUICK_START.pdf).
@@ -134,12 +134,14 @@ The engine map scales with `displacement_l`, while `rated_power_kW` limits the s
 | Diesel, loaded timber truck [l/100 km] | 75.1 (67.1) | 52–69 | Noreland 2025, measured fleet |
 | Diesel, empty timber truck [l/100 km] | 33.3 (31.9) | 34–47 | Noreland 2025, measured fleet |
 | Idle fuel [l/h] | 2.2 (2.8) | about 2.4 | Noreland 2025 |
-| Fuel cell bus [kg H2/100 km] | 6.6–8.4 | 7.7 | JIVE 2, measured, 12 m buses |
+| Fuel cell bus [kg H2/100 km] | 6.5–8.4 | 7.7 | JIVE 2, measured, 12 m buses |
 | Electric timber truck, loaded / empty [kWh/km] | 2.78 / 1.54 | 2.5 / 1.5 | Skogforsk 2023, planning values |
 
 Fuel cell range = new to aged stack. Electric results do not depend on the engine map.
 
 ![Engine operating points on the efficiency map](docs/img/fig_operating_points.png)
+
+How to read the figure: the orange diamond is idle at the stops (vehicle standing, clutch open, 600 rpm, torque = auxiliary load only). The red vertical lines are steady cruising in top gear: with the clutch closed the engine speed is fixed by the vehicle speed (n = v · i_gear · i_axle / (2π r)), e.g. coach 100 km/h = 1220 rpm, truck 80 km/h = 1320 rpm, bus 50 km/h = 1300 rpm, and the torque changes with the grade; on gentle downhills it falls to the auxiliary load (near 0 Nm). Steps with the engine dragged by the vehicle (overrun, fuel cut-off, 0 fuel) are not drawn. The measured points at 0 Nm are test-bench points with zero brake torque (engine firing).
 
 ## Known limits
 
@@ -149,6 +151,7 @@ Fuel cell range = new to aged stack. Electric results do not depend on the engin
 - Battery-electric and fuel cell vehicles carry `extra_mass_kg`, the hydrogen engine `h2ice_mass` > `extra_mass_kg` (net of the removed diesel parts; arithmetic in `mass_breakdown_kg`, references in `electric` > `mass_sources`). Diesel and HVO100 use the diesel vehicle mass; the hydrogen engine is simulated in a second run (`consumption_h2ice_<mission>.csv`). The loaded timber leg has `max_gross_kg` = 74 t (Swedish BK4): the gross mass stays at the limit and the extra mass reduces the payload (`payload_kg` and `timber_t_per_round_trip` in the summaries; round-trip column of the Excel Summary). Open issue: motor and engine sizing should follow an equal power-to-mass rule (`power_to_mass_rule` in vehicles.json).
 - Routes are synthetic, not GPS tracks.
 - Gear shifting is ideal (lowest fuel use at each step); there is no engine start-stop.
+- Fuel cell energy management: when the buffer battery cannot take more charge, the fuel cell backs off first (down to its minimum load, ramp limited) and only then is regeneration reduced. The buffer-battery charge limit (3C, 210 kW on the timber truck) is an assumption and is now the limit on regeneration of the loaded timber leg (67 % of the braking energy recovered); with 5C the hydrogen use of that leg falls by only 0.3 %.
 - Several fuel cell and electric-drive inputs are assumptions: part-load points of the efficiency curve, minimum load, ramp rate, DC/DC losses, regeneration limits, bus and coach component sizes.
 - No cabin heating model, and no crane work for the timber truck.
 

@@ -264,7 +264,7 @@
                 "soc_min": 0.3,
                 "soc_max": 0.8
             },
-            "note": "System efficiency (LHV) at 25 % and 100 % load BOL: S (DOE Program Record 26002, 2026); EOL at 25 % and 100 %: S (Wang & Ahluwalia, Argonne, 2025: 48-51 % peak, 40-48 % rated); other points interpolated (A). Purge and crossover are inside the efficiency; purge share 0.5 % (assumption) is reported separately only for the H2-emission inventory. Minimum load, ramp rate, DC/DC curve and EMS settings are A (not available from public sources)."
+            "note": "System efficiency (LHV) at 25 % and 100 % load BOL: S (DOE Program Record 26002, 2026); EOL at 25 % and 100 %: S (Wang & Ahluwalia, Argonne, 2025: 48-51 % peak, 40-48 % rated); other points interpolated (A). Purge and crossover are inside the efficiency; purge share 0.5 % (assumption) is reported separately only for the H2-emission inventory. Minimum load, ramp rate, DC/DC curve and EMS settings are A (not available from public sources). EMS priority when the battery cannot take more charge: 1) the fuel cell backs off to its minimum load (ramp limited), 2) regeneration is reduced (friction brakes), 3) the fuel cell goes below its minimum load only if still needed."
         },
         "vehicles": {
             "timber_truck": {
@@ -299,7 +299,7 @@
                 "fcev": {
                     "fc_net_kW": 300,
                     "battery_kWh": 70,
-                    "C_discharge": 5.0,
+                    "C_discharge": 5.71,
                     "C_charge": 3.0,
                     "extra_mass_kg": 290,
                     "mass_breakdown_kg": {
@@ -317,7 +317,7 @@
                     ],
                     "mass_note": "40 kg H2 usable (A) = one 200 km round trip with an aged fuel cell (~32 kg in this model) + reserve. Storage mass scales ~23 kg per kg H2 at 700 bar: with 60 kg H2 the net value is about +750 kg."
                 },
-                "note": "Motor 490 kW peak (S: Volvo FH Electric). FC 2 x 150 kW (S: Volvo/cellcentric test trucks). Buffer battery 70 kWh, 400 kW peak (S: Mercedes GenH2). BEV battery 590 kWh installed (D: Skogforsk 2.5/1.5 kWh/km, 200 km round trip, 85 % window, 20 % reserve). 4 gears like the eActros 600 e-axle (S), ratios A. Driven-axle load share A."
+                "note": "Motor 490 kW peak (S: Volvo FH Electric). FC 2 x 150 kW (S: Volvo/cellcentric test trucks). Buffer battery 70 kWh, 400 kW peak (S: Mercedes GenH2; trade-press source, to be replaced with the Daimler Truck release): C_discharge 5.71 = 400/70. C_charge 3C = 210 kW is A (charge acceptance not stated); sensitivity C_charge 5C: H2 of the loaded leg -0.3 %. BEV battery 590 kWh installed (D: Skogforsk 2.5/1.5 kWh/km, 200 km round trip, 85 % window, 20 % reserve). 4 gears like the eActros 600 e-axle (S), ratios A. Driven-axle load share A."
             },
             "urban_bus": {
                 "motor_peak_kW": 250,

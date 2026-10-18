@@ -151,6 +151,7 @@ class FuelCell:
         elif self.on and p_req < 0.5 * self.pmin:
             self.on = False
         tgt = min(max(p_req, self.pmin), self.pr) if self.on else 0.0
+        self.p_prev, self.dt_last = self.p, dt            # kept for the back-off when the battery is full
         self.p += max(-self.ramp * dt, min(self.ramp * dt, tgt - self.p))
         return self.p
 
@@ -236,7 +237,7 @@ def run(tag, kind):
             F_reg = min(F + 0.5 * m_eff_sim * min(v0s, drv.v_cut) ** 2 / DS, 0.0)
         acc = {k: 0.0 for k in ["mot", "regen", "aux", "bat", "loss", "fc", "dc", "h2b", "h2e", "fric"]}
         d = {"gear": 0, "t": 0.0, "w": 0.0, "p_el": 0.0, "f_regen": 0.0}
-        deficit, p_fc_drive, p_bat_drive = 0, 0.0, 0.0
+        deficit, p_fc_drive, p_bat_drive, p_mot_drive = 0, 0.0, 0.0, 0.0
         for sub, tt in (("dwell", st["dwell_s"]), ("drive", dt)):
             if tt <= 0:
                 continue
@@ -261,10 +262,20 @@ def run(tag, kind):
                         deficit = 1
             p_bat = p_mot + aux - p_dc
             if p_bat < -p_chg_ok:                                # more charging than the battery accepts
+                # Priority to regeneration (free energy): 1) the fuel cell backs off, but stays on at its minimum load
+                # and within its ramp limit; 2) regeneration is reduced (friction brakes); 3) only if the battery still
+                # cannot take the fuel cell power (e.g. SOC at soc_max) the fuel cell goes below its minimum load.
                 exc = -p_chg_ok - p_bat
-                cut = min(exc, max(-p_mot, 0.0))                 # 1) less regeneration (friction brakes)
-                p_mot += cut; exc -= cut
-                if exc > 0 and kind == "fcev":                   # 2) fuel cell backs off
+                if kind == "fcev" and p_fc > 0:
+                    floor = max(fc.pmin, fc.p_prev - fc.ramp * fc.dt_last)
+                    p_new = max(floor, p_fc - exc / 0.97)
+                    if p_new < p_fc:
+                        p_fc = p_new; fc.p = p_fc; p_dc = fc.dcdc(p_fc)
+                        exc = -p_chg_ok - (p_mot + aux - p_dc)
+                if exc > 0:
+                    cut = min(exc, max(-p_mot, 0.0))
+                    p_mot += cut; exc -= cut
+                if exc > 0 and kind == "fcev":
                     p_fc = max(0.0, p_fc - exc / 0.97); fc.p = p_fc; p_dc = fc.dcdc(p_fc)
                 p_bat = p_mot + aux - p_dc
             if kind == "bev" and (p_bat > bat.p_dis or bat.soc <= soc_min):
@@ -279,13 +290,13 @@ def run(tag, kind):
                     acc["h2b"] += p_fc * h / fc.eta(p_fc, "BOL") / LHV_H2
                     acc["h2e"] += p_fc * h / fc.eta(p_fc, "EOL") / LHV_H2
             if sub == "drive":
-                p_fc_drive, p_bat_drive = p_fc, p_bat
+                p_fc_drive, p_bat_drive, p_mot_drive = p_fc, p_bat, p_mot
                 if F < 0:
                     used = d["f_regen"] * (max(-p_mot, 0) / -d["p_el"] if d["p_el"] < 0 else 0.0)
                     acc["fric"] += (-F - used) * DS / 3.6e6
         n_inf += deficit
         st.update({"gear": d["gear"], "motor_torque_frac": round(d["t"], 3), "motor_speed_frac": round(d["w"], 3),
-                   "P_motor_el_kW": round(d["p_el"], 2), "E_motor_el_kWh": round(acc["mot"], 6),
+                   "P_motor_el_kW": round(p_mot_drive, 2), "E_motor_el_kWh": round(acc["mot"], 6),
                    "E_regen_el_kWh": round(acc["regen"], 6), "E_friction_brake_kWh": round(acc["fric"], 6),
                    "E_aux_kWh": round(acc["aux"], 6)})
         if kind == "bev":
