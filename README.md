@@ -1,6 +1,6 @@
 # mini-VECTO
 
-A small, transparent energy-use simulator for heavy-duty vehicles. It compares five powertrains on the same 100 km missions and returns the fuel, hydrogen or electricity used **every 10 metres**, plus the mission average.
+A small, transparent energy-use simulator for heavy-duty vehicles. It compares five powertrains on the same missions (a 100 km timber-truck route both ways, and the VECTO Urban and Coach cycles for the buses) and returns the fuel, hydrogen or electricity used **every 10 metres**, plus the mission average.
 
 Built by Filippo Cinquini, master's student at Chalmers University of Technology, as a supporting tool for coursework in **TRA545 Hydrogen Technologies**: the course project needed a vehicle energy model and none was available, so this one was written from public sources.
 
@@ -10,12 +10,12 @@ Built by Filippo Cinquini, master's student at Chalmers University of Technology
 
 ## What it does
 
-| Powertrains | Missions (100 km each) |
+| Powertrains | Missions |
 |---|---|
-| Diesel | Timber truck, empty leg, 20 t |
-| HVO100 | Timber truck, loaded leg, 74 t |
-| Hydrogen engine (HPDI with HVO100 pilot) | Urban bus, 12.8 t (12 passengers) |
-| Fuel cell electric | Coach, 17.0 t (37 passengers) |
+| Diesel | Timber truck, empty leg, 20 t, 100 km synthetic route |
+| HVO100 | Timber truck, loaded leg, 74 t, same route reversed |
+| Hydrogen engine (HPDI with HVO100 pilot) | Urban bus, 12.8 t (12 passengers), VECTO Urban cycle, 39.6 km |
+| Fuel cell electric | Coach, 17.0 t (37 passengers), VECTO Coach cycle, 91.7 km |
 | Battery electric | |
 
 The method follows the logic of VECTO, the EU tool for heavy-duty CO2 certification: a **backward** simulation on a **distance-based** cycle.
@@ -48,11 +48,26 @@ Mean consumption per 100 km
 mission         Diesel l   HVO l  H2-ICE kg   FCEV kg new/aged  BEV kWh (battery)
 timber_empty        33.3    34.6        9.3          7.5 / 9.6                154
 timber_loaded       75.1    78.0       21.6        16.0 / 20.3                278
-urban_bus           42.4    44.1       11.9          6.5 / 8.4                122
-coach               25.1    26.1        7.0          5.9 / 7.5                115
+urban_bus           34.9    36.2        9.6          5.7 / 7.4                112
+coach               28.1    29.2        7.9          6.0 / 7.6                113
 ```
 
 On macOS or Windows you can also double click `RUN_MODEL_mac.command` or `RUN_MODEL_windows.bat`. A step-by-step guide is in [docs/QUICK_START.pdf](docs/QUICK_START.pdf).
+
+## Driving cycles
+
+Timber truck: a synthetic 100 km route (road classes, curves, grades and stops from Swedish data, `missions.py`), driven empty one way and loaded back.
+
+Buses (since 0.3.0): the **VECTO** standard bus cycles, so that the results can be compared with VECTO and with studies that use the same cycles. Base case: urban bus on **VECTO Urban**, coach on **VECTO Coach**; VECTO Heavy Urban and Suburban, and the synthetic routes used up to 0.2.1, are kept as a sensitivity (`cycle_sensitivity.py`, `results/cycle_sensitivity.csv`). The cycle files (`<s>,<v>,<grad>,<stop>`, the VECTO Declaration mission cycles) were provided by AB Volvo for the course; they are not redistributed here. Put them in `data/private/vecto_cycles/` (Urban.csv, Coach.csv, HeavyUrban.csv, Suburban.csv) to reproduce the base case; without them the synthetic bus routes are used.
+
+| Mission | Cycle | km | Mean speed [km/h] | Stops per km | Climb [m per 100 km] | Diesel [l/100 km] | H2-ICE [kg/100 km] | FCEV new / aged [kg/100 km] | BEV [kWh/100 km] |
+|---|---|---|---|---|---|---|---|---|---|
+| urban_bus | VECTO Urban | 39.6 | 17.6 | 3.06 | 727 | 34.9 | 9.6 | 5.7 / 7.4 | 112 |
+| urban_bus_heavyurban | VECTO HeavyUrban | 30.5 | 12.3 | 5.08 | 689 | 43.1 | 11.8 | 6.9 / 8.9 | 135 |
+| urban_bus_suburban | VECTO Suburban | 23.5 | 27.4 | 1.87 | 315 | 32.5 | 9.1 | 5.4 / 6.9 | 99 |
+| urban_bus_synthetic | synthetic (up to 0.2.1) | 100.0 | 17.1 | 2.91 | 487 | 42.4 | 11.9 | 6.5 / 8.4 | 122 |
+| coach | VECTO Coach | 91.7 | 65.3 | 0.07 | 838 | 28.1 | 7.9 | 6.0 / 7.6 | 113 |
+| coach_synthetic | synthetic (up to 0.2.1) | 100.0 | 78.4 | 0.05 | 580 | 25.1 | 7.0 | 5.9 / 7.5 | 115 |
 
 ## Outputs
 
@@ -134,7 +149,7 @@ The engine map scales with `displacement_l`, while `rated_power_kW` limits the s
 | Diesel, loaded timber truck [l/100 km] | 75.1 (67.1) | 52–69 | Noreland 2025, measured fleet |
 | Diesel, empty timber truck [l/100 km] | 33.3 (31.9) | 34–47 | Noreland 2025, measured fleet |
 | Idle fuel [l/h] | 2.2 (2.8) | about 2.4 | Noreland 2025 |
-| Fuel cell bus [kg H2/100 km] | 6.5–8.4 | 7.7 | JIVE 2, measured, 12 m buses |
+| Fuel cell bus [kg H2/100 km] | 5.7–7.4 (VECTO Urban), 6.9–8.9 (Heavy Urban) | 7.7 | JIVE 2, measured, 12 m buses |
 | Electric timber truck, loaded / empty [kWh/km] | 2.78 / 1.54 | 2.5 / 1.5 | Skogforsk 2023, planning values |
 
 Fuel cell range = new to aged stack. Electric results do not depend on the engine map.
@@ -149,7 +164,8 @@ How to read the figure: the orange diamond is idle at the stops (vehicle standin
 - HVO100 and the hydrogen engine use the diesel map (equal efficiency). For hydrogen this is an assumption, not a measurement.
 - With the measured map, engine torque above the highest measured point of a speed line is extrapolated (14 % of the fuel of the loaded timber truck, 3 % or less elsewhere).
 - Battery-electric and fuel cell vehicles carry `extra_mass_kg`, the hydrogen engine `h2ice_mass` > `extra_mass_kg` (net of the removed diesel parts; arithmetic in `mass_breakdown_kg`, references in `electric` > `mass_sources`). Diesel and HVO100 use the diesel vehicle mass; the hydrogen engine is simulated in a second run (`consumption_h2ice_<mission>.csv`). The loaded timber leg has `max_gross_kg` = 74 t (Swedish BK4): the gross mass stays at the limit and the extra mass reduces the payload (`payload_kg` and `timber_t_per_round_trip` in the summaries; round-trip column of the Excel Summary). Open issue: motor and engine sizing should follow an equal power-to-mass rule (`power_to_mass_rule` in vehicles.json).
-- Routes are synthetic, not GPS tracks.
+- The timber route is synthetic, not a GPS track. The bus cycles are the VECTO Urban and Coach cycles, driven with this model's driver (acceleration caps, not VECTO's driver model), so results are close to, not identical with, a VECTO run on the same cycle.
+- On the VECTO Coach cycle the battery-electric coach (19.3 t, 340 kW) cannot follow the steepest climbs in 505 of 9 173 steps (motor at its limit); see `power_to_mass_rule` in vehicles.json.
 - Gear shifting is ideal (lowest fuel use at each step); there is no engine start-stop.
 - Fuel cell energy management: when the buffer battery cannot take more charge, the fuel cell backs off first (down to its minimum load, ramp limited) and only then is regeneration reduced. The buffer-battery charge limit (3C, 210 kW on the timber truck) is an assumption and is now the limit on regeneration of the loaded timber leg (67 % of the braking energy recovered); with 5C the hydrogen use of that leg falls by only 0.3 %.
 - Several fuel cell and electric-drive inputs are assumptions: part-load points of the efficiency curve, minimum load, ramp rate, DC/DC losses, regeneration limits, bus and coach component sizes.

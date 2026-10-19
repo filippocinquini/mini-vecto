@@ -16,7 +16,8 @@
       "p_wheel_max_kW": 355.0,
       "cr_scale": 1.0
     },
-    "title": "Timber truck, empty leg (mill -> forest)"
+    "title": "Timber truck, empty leg (mill -> forest)",
+    "cycle_source": "synthetic route (missions.py)"
   },
   "timber_loaded": {
     "length_km": 100.0,
@@ -35,9 +36,78 @@
       "p_wheel_max_kW": 355.0,
       "cr_scale": 1.0
     },
-    "title": "Timber truck, loaded leg (forest -> mill)"
+    "title": "Timber truck, loaded leg (forest -> mill)",
+    "cycle_source": "synthetic route (missions.py)"
   },
   "urban_bus": {
+    "length_km": 39.6,
+    "duration_min": 134.8,
+    "avg_speed_kmh": 17.6,
+    "avg_driving_speed_kmh": 26.8,
+    "standstill_share_pct": 34.4,
+    "stops_with_dwell": 121,
+    "total_climb_m": 288,
+    "max_grade_pct": 8.9,
+    "vehicle": "Urban bus 12 m",
+    "vehicle_params": {
+      "mass_kg": 12816,
+      "rot_mass_kg": 600,
+      "CdA_m2": 6.5,
+      "p_wheel_max_kW": 218.6,
+      "cr_scale": 0.9497041420118343
+    },
+    "title": "Urban bus, VECTO Urban cycle",
+    "cycle_source": "VECTO cycle Urban.csv"
+  },
+  "coach": {
+    "length_km": 91.7,
+    "duration_min": 84.3,
+    "avg_speed_kmh": 65.3,
+    "avg_driving_speed_kmh": 67.4,
+    "standstill_share_pct": 3.2,
+    "stops_with_dwell": 6,
+    "total_climb_m": 768,
+    "max_grade_pct": 13.4,
+    "vehicle": "Coach 13 m",
+    "vehicle_params": {
+      "mass_kg": 16960,
+      "rot_mass_kg": 700,
+      "CdA_m2": 5.0,
+      "p_wheel_max_kW": 301.7,
+      "cr_scale": 0.9497041420118343
+    },
+    "title": "Coach, VECTO Coach cycle",
+    "cycle_source": "VECTO cycle Coach.csv"
+  },
+  "urban_bus_heavyurban": {
+    "length_km": 30.5,
+    "duration_min": 149.2,
+    "avg_speed_kmh": 12.3,
+    "avg_driving_speed_kmh": 21.9,
+    "standstill_share_pct": 44.0,
+    "stops_with_dwell": 155,
+    "total_climb_m": 210,
+    "max_grade_pct": 4.2,
+    "vehicle": "Urban bus 12 m",
+    "title": "Urban bus, VECTO Heavy Urban cycle",
+    "cycle_source": "VECTO cycle HeavyUrban.csv",
+    "sensitivity": true
+  },
+  "urban_bus_suburban": {
+    "length_km": 23.5,
+    "duration_min": 51.5,
+    "avg_speed_kmh": 27.4,
+    "avg_driving_speed_kmh": 33.1,
+    "standstill_share_pct": 17.4,
+    "stops_with_dwell": 44,
+    "total_climb_m": 74,
+    "max_grade_pct": 3.4,
+    "vehicle": "Urban bus 12 m",
+    "title": "Urban bus, VECTO Suburban cycle",
+    "cycle_source": "VECTO cycle Suburban.csv",
+    "sensitivity": true
+  },
+  "urban_bus_synthetic": {
     "length_km": 100.0,
     "duration_min": 351.2,
     "avg_speed_kmh": 17.1,
@@ -47,16 +117,11 @@
     "total_climb_m": 487,
     "max_grade_pct": 2.5,
     "vehicle": "Urban bus 12 m",
-    "vehicle_params": {
-      "mass_kg": 12816,
-      "rot_mass_kg": 600,
-      "CdA_m2": 6.5,
-      "p_wheel_max_kW": 218.6,
-      "cr_scale": 0.9497041420118343
-    },
-    "title": "Urban bus, 100 km (5 round trips of a 10 km line)"
+    "title": "Urban bus, 100 km (5 round trips of a 10 km line)",
+    "cycle_source": "synthetic route (missions.py)",
+    "sensitivity": true
   },
-  "coach": {
+  "coach_synthetic": {
     "length_km": 100.0,
     "duration_min": 76.5,
     "avg_speed_kmh": 78.4,
@@ -66,13 +131,8 @@
     "total_climb_m": 580,
     "max_grade_pct": 3.8,
     "vehicle": "Coach 13 m",
-    "vehicle_params": {
-      "mass_kg": 16960,
-      "rot_mass_kg": 700,
-      "CdA_m2": 5.0,
-      "p_wheel_max_kW": 301.7,
-      "cr_scale": 0.9497041420118343
-    },
-    "title": "Coach, 100 km intercity"
+    "title": "Coach, 100 km intercity",
+    "cycle_source": "synthetic route (missions.py)",
+    "sensitivity": true
   }
 }

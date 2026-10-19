@@ -1,11 +1,12 @@
 """
 run_all.py - runs the whole model with one command:   python3 run_all.py
 
-  1 missions.py              driving cycles (100 km, 10 m steps) from routes + driver model
+  1 missions.py              driving cycles (10 m steps): synthetic timber route, VECTO bus cycles + driver model
   2 powertrain.py            Diesel, HVO100, H2-ICE consumption
   3 electric.py              FCEV and BEV consumption
   4 plot_operating_points.py engine operating points figure
   5 export_excel.py          results/consumption_<powertrain>.xlsx
+  6 cycle_sensitivity.py     buses on other cycles (results/cycle_sensitivity.csv), if the VECTO cycles are present
 
 Options:  python3 run_all.py --keep-cycles   skip step 1 (cycles unchanged, faster)
           python3 run_all.py --engine-map model      use the semi-empirical engine map (50 % peak)
@@ -19,7 +20,7 @@ missing = [m for m in ("numpy", "matplotlib", "openpyxl") if importlib.util.find
 if missing:
     sys.exit("Missing Python packages: " + ", ".join(missing) +
              "\nInstall them with:  " + os.path.basename(sys.executable) + " -m pip install -r requirements.txt")
-steps = ["missions.py", "powertrain.py", "electric.py", "plot_operating_points.py", "export_excel.py"]
+steps = ["missions.py", "powertrain.py", "electric.py", "plot_operating_points.py", "export_excel.py", "cycle_sensitivity.py"]
 if "--keep-cycles" in sys.argv:
     steps = steps[1:]
 if "--engine-map" in sys.argv:

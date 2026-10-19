@@ -7,6 +7,8 @@ surface, and stops. A driver model then produces the simulated speed profile v(s
   2. backward    : slow down in time for curves, limits and stops (decel table)
   3. forward     : accelerate as the driver does (accel table) and as the power allows
 Output per mission: distance-based CSV (VECTO style, 10 m step) + 1 Hz time-based CSV + plot.
+Buses: since 0.3 the base case runs on the VECTO Urban and Coach cycles (vecto_route), if the files are in
+data/private/vecto_cycles; the synthetic bus routes below are kept as a sensitivity case.
 
 Timber truck: accel/decel tables from Noreland, Skogforsk Arbetsrapport 1247-2025, Tab. 3-4.
 Buses: accel cap 1.0 m/s2 and decel 0.8 m/s2 (VECTO Heavy Urban output shows max 1.10 / 1.00).
@@ -111,6 +113,42 @@ class Route:
         r.z = self.z[::-1].copy(); r.surf = self.surf[::-1].copy(); r.rc = self.rc[::-1].copy()
         r.dwell = self.dwell[::-1].copy(); r.limit_kmh = self.limit_kmh[::-1].copy(); r.radius = self.radius[::-1].copy()
         return r
+
+# ------------------------------------------------------------------ VECTO cycle importer
+def vecto_route(path, name):
+    """Route from a VECTO distance-based cycle file: columns <s> [m], <v> [km/h] target speed, <grad> [%], <stop> [s]
+    (a 5th column, e.g. <HW> in the coach cycle, is ignored). Target speed and grade hold from one row to the next;
+    a row with a stop time (or v = 0) is a stop at that distance. The same driver model as for the synthetic routes
+    turns the target speed into the driven speed, so accelerations follow the bus caps below, not VECTO's driver."""
+    rows = []
+    for k, r in enumerate(csv.reader(open(path, encoding="utf-8-sig"))):
+        if k == 0 or not r or not r[0].strip():
+            continue
+        rows.append([float(x) for x in r[:4]])
+    S, V, Gr, St = (np.array(c) for c in zip(*rows))
+    L = float(np.floor(S[-1] / DS) * DS)
+    s = np.arange(0, L + DS/2, DS)
+    n = len(s)
+    idx = np.clip(np.searchsorted(S, s, side="right") - 1, 0, len(S) - 1)
+    r = Route(name)
+    r.s = s
+    r.limit_kmh = V[idx].copy()
+    r.vlim = V[idx] / 3.6
+    r.grade = Gr[idx] / 100
+    r.z = np.concatenate([[0], np.cumsum(r.grade[:-1] * DS)])
+    r.surf = np.array(["asphalt"] * n, dtype=object)
+    r.rc = np.array(["VECTO " + os.path.splitext(os.path.basename(path))[0]] * n, dtype=object)
+    r.radius = np.full(n, np.inf)
+    r.dwell = np.zeros(n)
+    for Si, Vi, Sti in zip(S, V, St):
+        if Sti > 0 or Vi == 0:
+            i = min(max(int(round(Si / DS)), 0), n - 1)
+            r.vlim[i] = 0.0
+            r.dwell[i] += Sti
+    r.vlim[0] = 0.0; r.vlim[-1] = 0.0
+    r.source = "VECTO cycle " + os.path.basename(path)
+    return r
+
 
 # ------------------------------------------------------------------ vehicle for power limit
 CR = {"asphalt": 0.00676, "gravel": 0.0126}   # Noreland (0 degC); buses use asphalt value scaled below
@@ -308,8 +346,34 @@ co.build(seed=31)
 # ASSUMPTION: 13 m coach, ~14 t curb + 40 pax x 80 kg incl. luggage
 coach = Veh("Coach 13 m", *mp("coach", 17200, 700, 5.0)[:3], p_wheel_max("coach", 340e3*0.93), cr_scale=mp("coach", 0, 0, 0, 0.95)[3], acc_cap=0.8, dec_cap=0.6)
 
+# ---------------- VECTO bus cycles (provided by AB Volvo, oct 2026; kept in data/private/vecto_cycles, not published)
+# Base case: urban bus on VECTO Urban, coach on VECTO Coach. Sensitivity: Heavy Urban, Suburban and the synthetic routes above.
+# If the files are missing the synthetic routes are used as base case (as before, version 0.2.1).
+VECTO_DIR = os.path.join(OUT, "data", "private", "vecto_cycles")
+VECTO_FILES = {"urban_bus": ("Urban.csv", "Urban bus, VECTO Urban cycle"),
+               "coach": ("Coach.csv", "Coach, VECTO Coach cycle"),
+               "urban_bus_heavyurban": ("HeavyUrban.csv", "Urban bus, VECTO Heavy Urban cycle"),
+               "urban_bus_suburban": ("Suburban.csv", "Urban bus, VECTO Suburban cycle")}
+
+
+def vecto(tag):
+    f, title = VECTO_FILES[tag]
+    p = os.path.join(VECTO_DIR, f)
+    return vecto_route(p, title) if os.path.exists(p) else None
+
+
+ub.source = co.source = tt_empty.source = tt_loaded.source = "synthetic route (missions.py)"
+ub_v, co_v = vecto("urban_bus"), vecto("coach")
+if ub_v is None or co_v is None:
+    print("NOTE: VECTO bus cycles not found in data/private/vecto_cycles: synthetic bus and coach routes used.")
 missions = [("timber_empty", tt_empty, truck_empty), ("timber_loaded", tt_loaded, truck_loaded),
-            ("urban_bus", ub, urban_bus), ("coach", co, coach)]
+            ("urban_bus", ub_v or ub, urban_bus), ("coach", co_v or co, coach)]
+sensitivity = []
+if ub_v is not None:
+    sensitivity += [(t, r, urban_bus) for t in ("urban_bus_heavyurban", "urban_bus_suburban") if (r := vecto(t)) is not None]
+    sensitivity.append(("urban_bus_synthetic", ub, urban_bus))
+if co_v is not None:
+    sensitivity.append(("coach_synthetic", co, coach))
 
 summary = {}
 fig, axes = plt.subplots(4, 1, figsize=(11, 13), dpi=140)
@@ -320,6 +384,7 @@ for ax, (tag, route, veh) in zip(axes, missions):
     st["vehicle_params"] = {"mass_kg": veh.m, "rot_mass_kg": veh.m_rot, "CdA_m2": veh.cda,
                             "p_wheel_max_kW": round(veh.p/1e3, 1), "cr_scale": veh.cr_scale}
     st["title"] = route.name
+    st["cycle_source"] = route.source
     summary[tag] = st
     km = route.s/1000
     ax.plot(km, np.minimum(route.vlim, 40)*3.6, color="#b8c4d2", lw=1.0, label="Speed limit incl. curves")
@@ -349,6 +414,14 @@ for ax, (tag, route, veh) in zip(axes.flat, missions):
     ax.set_xlabel("Distance [km]"); ax.set_ylabel("km/h"); ax.grid(alpha=0.25); ax.set_ylim(0, 105)
 fig.tight_layout()
 fig.savefig(os.path.join(OUT, "fig_mission_zoom.png"))
+
+# sensitivity cycles: same vehicles, other cycles (no figures; results in cycle_sensitivity.py)
+for tag, route, veh in sensitivity:
+    v, t, a = drive(route, veh)
+    export(route, v, t, a, tag)
+    st = stats(route, v, t); st["vehicle"] = veh.name; st["title"] = route.name
+    st["cycle_source"] = route.source; st["sensitivity"] = True
+    summary[tag] = st
 
 with open(os.path.join(OUT, "mission_summary.json"), "w") as f:
     json.dump(summary, f, indent=2)

@@ -189,6 +189,58 @@
             "cr_gravel": 0.012,
             "pax_note": "BASE CASE = Swedish average occupancy: 37 passengers (D: Trafikanalys 'Langvaga buss 2010', 52 seats, ~71 % load factor). 80 kg incl. luggage = A (measured 92.4 kg, NEA/IRU 2007). curb 14 t = A. gvw_kg 20.2 t = Volvo 9700 coach, 53 seats, steerable tag axle (S: volvobuses.com Volvo 9700 specifications).",
             "gvw_kg": 20200
+        },
+        "urban_bus_heavyurban": {
+            "vehicle": "urban_bus",
+            "curb_kg": 12000,
+            "n_pax": 12,
+            "kg_per_pax": 68,
+            "rot_mass_kg": 600,
+            "CdA_m2": 6.5,
+            "cr_asphalt": 0.00642,
+            "cr_gravel": 0.012,
+            "gvw_kg": 19500,
+            "sensitivity_of": "urban_bus",
+            "note": "Cycle sensitivity: same vehicle and load as urban_bus, VECTO Heavy Urban cycle."
+        },
+        "urban_bus_suburban": {
+            "vehicle": "urban_bus",
+            "curb_kg": 12000,
+            "n_pax": 12,
+            "kg_per_pax": 68,
+            "rot_mass_kg": 600,
+            "CdA_m2": 6.5,
+            "cr_asphalt": 0.00642,
+            "cr_gravel": 0.012,
+            "gvw_kg": 19500,
+            "sensitivity_of": "urban_bus",
+            "note": "Cycle sensitivity: same vehicle and load as urban_bus, VECTO Suburban cycle."
+        },
+        "urban_bus_synthetic": {
+            "vehicle": "urban_bus",
+            "curb_kg": 12000,
+            "n_pax": 12,
+            "kg_per_pax": 68,
+            "rot_mass_kg": 600,
+            "CdA_m2": 6.5,
+            "cr_asphalt": 0.00642,
+            "cr_gravel": 0.012,
+            "gvw_kg": 19500,
+            "sensitivity_of": "urban_bus",
+            "note": "Cycle sensitivity: same vehicle and load as urban_bus, synthetic 10 km line, 100 km (base case up to 0.2.1)."
+        },
+        "coach_synthetic": {
+            "vehicle": "coach",
+            "curb_kg": 14000,
+            "n_pax": 37,
+            "kg_per_pax": 80,
+            "rot_mass_kg": 700,
+            "CdA_m2": 5.0,
+            "cr_asphalt": 0.00642,
+            "cr_gravel": 0.012,
+            "gvw_kg": 20200,
+            "sensitivity_of": "coach",
+            "note": "Cycle sensitivity: same vehicle and load as coach, synthetic 100 km intercity route (base case up to 0.2.1)."
         }
     },
     "hpdi": {
@@ -325,7 +377,10 @@
                 "v_top_kmh": 85,
                 "aux_el_kW": 8.0,
                 "driven_axle_load_share": {
-                    "urban_bus": 0.65
+                    "urban_bus": 0.65,
+                    "urban_bus_heavyurban": 0.65,
+                    "urban_bus_suburban": 0.65,
+                    "urban_bus_synthetic": 0.65
                 },
                 "bev": {
                     "battery_kWh": 330,
@@ -374,7 +429,8 @@
                 "v_top_kmh": 110,
                 "aux_el_kW": 6.0,
                 "driven_axle_load_share": {
-                    "coach": 0.65
+                    "coach": 0.65,
+                    "coach_synthetic": 0.65
                 },
                 "bev": {
                     "battery_kWh": 500,

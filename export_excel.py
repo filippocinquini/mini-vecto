@@ -194,7 +194,7 @@ COMMON_EXT = [("km", "Distance", "km", lambda R: f"=COUNT({R('s_m')})*0.01"),
 COMMON_DER = [("vmean", "Mean speed", "km/h", lambda c: f"={c('km')}/({c('min')}/60)", "0.0"),
               ("trac_km", "Traction work at the wheels", "kWh/km", lambda c: f"={c('trac')}/{c('km')}", "0.000"),
               ("brk_km", "Braking work at the wheels", "kWh/km", lambda c: f"={c('brk')}/{c('km')}", "0.000")]
-GENERAL = ["MODEL", "Backward vehicle simulation on 100 km distance-based mission cycles (10 m steps), see README.md.",
+GENERAL = ["MODEL", "Backward vehicle simulation on distance-based mission cycles (10 m steps): synthetic 100 km timber route, VECTO Urban and Coach cycles for the buses. See README.md.",
            "Wheel force = inertia + grade + rolling resistance + aerodynamic drag, same masses and resistances for every powertrain.",
            "Mass penalty: battery-electric, fuel cell and hydrogen-engine vehicles carry an extra mass (battery / hydrogen storage minus the removed diesel parts, see MASS PENALTY); diesel and HVO100 use the diesel vehicle mass.",
            "Timber loaded leg: gross mass kept at the Swedish BK4 limit of 74 t for every powertrain, so the extra mass reduces the payload (row 'Payload' = timber delivered per round trip).",
