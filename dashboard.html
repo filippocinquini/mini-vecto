@@ -3,263 +3,1187 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mini-VECTO dashboard</title>
+<title>mini-VECTO</title>
 <style>
 :root{
-  --ink:#16232E; --ink2:#3D4A55; --mute:#7A858E; --paper:#F5F4EF; --card:#FCFBF8; --line:#DEDBD2; --band:#ECEAE3;
-  --teal:#1B6F66; --orange:#A8521A; --navy:#16232E;
-  --c-diesel:#5B6770; --c-hvo100:#8A7A36; --c-h2ice:#2E6DB4; --c-fcev:#1B8A7A; --c-bev:#C0611E;
+  --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --text:#1d1d1f; --text-2:#6e6e73; --text-3:#86868b;
+  --bg:#f5f5f7; --panel:#ffffff; --panel-2:#fbfbfd; --line:#d2d2d7; --grid:#e8e8ed; --fill:rgba(118,118,128,.12);
+  --accent:#0071e3; --accent-soft:rgba(0,113,227,.12); --link:#0066cc;
+  --chart-context:#c7c7cc; --chart-muted:#8e8e93;
+  --c-diesel:#4d4d52; --c-hvo100:#6a9a5b; --c-h2ice:#2e6f9e; --c-fcev:#3ba7a0; --c-bev:#e8a33d;
+  --nav-bg:rgba(251,251,253,.8); --halo:#ffffff;
+  --s-1:4px; --s-2:8px; --s-3:16px; --s-4:24px; --s-5:32px; --s-6:48px; --s-7:64px; --s-8:96px;
+  --wide:1200px; --nav-h:52px; --player-h:72px; color-scheme:light;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Helvetica Neue",Arial,sans-serif}
-header{background:var(--navy);color:#F5F4EF;padding:18px 28px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
-header h1{margin:0;font:600 24px/1.2 "SF Mono",Menlo,Consolas,monospace;letter-spacing:.5px}
-header p{margin:2px 0 0;color:#B9C6CF;font-size:14px}
-.run{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px}
-button.primary{background:#E9A15E;border-color:#E9A15E;color:#16232E;font-weight:600;padding:9px 20px}
-button.primary:disabled{opacity:.55;cursor:wait}
-label.chk{color:#D6DEE3;font-size:13px;display:flex;gap:6px;align-items:center}
-.progress{display:flex;gap:6px;padding:10px 28px;background:#1F313F;flex-wrap:wrap;align-items:center}
-.pill{font-size:12px;padding:3px 10px;border-radius:999px;background:#2C4252;color:#9FB0BC}
-.pill.done{background:#2F6B60;color:#E4F2EF}.pill.now{background:#E9A15E;color:#16232E;font-weight:600}
-#status{color:#C9D3D9;font-size:13px;margin-left:8px}
-main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
-section{margin-bottom:36px}
-h2{font-size:22px;margin:0 0 4px}
-.sub{color:var(--ink2);margin:0 0 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
-/* stepper */
-.stepper{display:grid;grid-template-columns:230px 1fr;gap:18px}
-.steps{display:flex;flex-direction:column;gap:6px}
-.steps button{text-align:left;display:flex;gap:10px;align-items:center;border-radius:10px;padding:10px 12px}
-.steps button .n{width:24px;height:24px;border-radius:50%;background:var(--band);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:none}
-.steps button.on{border-color:var(--teal);background:#E6F0EE}
-.steps button.on .n{background:var(--teal);color:#fff}
-.panel h3{margin:0 0 4px;font-size:19px}.panel .lead{color:var(--ink2);margin:0 0 12px}
-.panel svg{width:100%;height:auto;display:block}
-.eq{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:var(--band);border-radius:8px;padding:8px 12px;display:inline-block;margin:6px 0}
-.nav{display:flex;justify-content:space-between;margin-top:14px}
-ul.pts{margin:8px 0 0;padding-left:20px;color:var(--ink2)}
-/* results */
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.tabs button.on{background:var(--ink);color:#F5F4EF;border-color:var(--ink)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-.kpi b{display:block;font-size:22px}.kpi span{color:var(--mute);font-size:13px}
-.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
-th:first-child,td:first-child{text-align:left}
-th{background:var(--band);font-weight:600}
-.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
-.note{color:var(--mute);font-size:13px;margin-top:8px}
-.files a{display:inline-block;margin:4px 8px 4px 0;color:var(--teal)}
-.figs img{max-width:100%;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#fff}
-pre#log{background:#0F1A22;color:#C9D3D9;font-size:12px;border-radius:10px;padding:10px;max-height:180px;overflow:auto;white-space:pre-wrap;display:none}
-.empty{padding:30px;text-align:center;color:var(--ink2)}
-@media (max-width:860px){.stepper,.grid2{grid-template-columns:1fr}.steps{flex-direction:row;flex-wrap:wrap}}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --text:#f5f5f7; --text-2:#a1a1a6; --text-3:#86868b;
+    --bg:#000000; --panel:#1c1c1e; --panel-2:#161617; --line:#424245; --grid:#2c2c2e; --fill:rgba(118,118,128,.24);
+    --accent:#2997ff; --accent-soft:rgba(41,151,255,.18); --link:#2997ff;
+    --chart-context:#48484a; --chart-muted:#8e8e93; --c-diesel:#98989d;
+    --nav-bg:rgba(22,22,23,.8); --halo:#1c1c1e; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --text:#f5f5f7; --text-2:#a1a1a6; --text-3:#86868b;
+  --bg:#000000; --panel:#1c1c1e; --panel-2:#161617; --line:#424245; --grid:#2c2c2e; --fill:rgba(118,118,128,.24);
+  --accent:#2997ff; --accent-soft:rgba(41,151,255,.18); --link:#2997ff;
+  --chart-context:#48484a; --chart-muted:#8e8e93; --c-diesel:#98989d;
+  --nav-bg:rgba(22,22,23,.8); --halo:#1c1c1e; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:calc(var(--nav-h) + 16px)}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.47 var(--font-sans);letter-spacing:-.022em;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;padding-bottom:calc(var(--player-h) + 24px)}
+button,input,select{font:inherit;color:inherit;letter-spacing:inherit}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- navigation ---------- */
+nav.top{position:sticky;top:0;z-index:50;height:var(--nav-h);background:var(--nav-bg);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+nav.top .in{max-width:var(--wide);margin:0 auto;height:100%;display:flex;align-items:center;gap:var(--s-4);padding:0 16px}
+.brand{font:600 19px/1 var(--font-display);letter-spacing:-.01em;white-space:nowrap;color:var(--text)}
+.brand span{color:var(--text-3);font-weight:400}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+@media (max-width:760px){nav.top{height:auto}nav.top .in{flex-wrap:wrap;gap:0 var(--s-3);padding-top:8px}.brand{flex:1}.tabs{order:3;flex-basis:100%;padding:4px 0 6px}}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{font-size:13px;color:var(--text-2);padding:6px 10px;border-radius:8px;white-space:nowrap;letter-spacing:-.01em}
+.tabs a:hover{color:var(--text);text-decoration:none;background:var(--fill)}
+.tabs a.on{color:var(--text);font-weight:600}
+.navr{display:flex;align-items:center;gap:var(--s-2)}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:0;background:transparent;color:var(--text-2);cursor:pointer;display:grid;place-items:center}
+.iconbtn:hover{background:var(--fill);color:var(--text)}
+.pill{border:0;border-radius:980px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:6px 14px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.pill:hover{filter:brightness(1.08)}
+.pill:disabled{opacity:.5;cursor:default}
+.pill.ghost{background:var(--fill);color:var(--text)}
+.pill.big{font-size:17px;padding:12px 24px}
+.ring-sm{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;animation:spin .8s linear infinite;display:none}
+.running .ring-sm{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- local bar: mission picker ---------- */
+.localbar{max-width:var(--wide);margin:0 auto;padding:var(--s-4) 16px 0;display:flex;justify-content:space-between;align-items:center;gap:var(--s-3);flex-wrap:wrap}
+.eyebrow{font:600 14px/1.3 var(--font-sans);color:var(--text-2);margin:0;letter-spacing:-.01em}
+.seg{position:relative;display:inline-flex;background:var(--fill);border-radius:9px;padding:2px;gap:0;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg .thumb{position:absolute;top:2px;bottom:2px;left:0;width:0;background:var(--panel);border-radius:7px;
+  box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);transition:left .28s cubic-bezier(.3,.7,.2,1),width .28s cubic-bezier(.3,.7,.2,1)}
+:root[data-theme="dark"] .seg .thumb{background:#636366}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg .thumb{background:#636366}}
+.seg button{position:relative;z-index:1;border:0;background:none;padding:5px 14px;font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap;border-radius:7px;letter-spacing:-.01em}
+.seg button.on{font-weight:600}
+.seg button:disabled{opacity:.35;cursor:default}
+.seg.small button{padding:3px 10px;font-size:12px}
+
+/* ---------- views ---------- */
+main{max-width:var(--wide);margin:0 auto;padding:0 16px}
+.view{display:none}
+.view.on{display:block}
+@media (prefers-reduced-motion: no-preference){
+  .view.on .rise{animation:rise .32s ease-out both}
+  .view.on .rise:nth-child(2){animation-delay:.04s}.view.on .rise:nth-child(3){animation-delay:.08s}
+  .view.on .rise:nth-child(4){animation-delay:.12s}.view.on .rise:nth-child(5){animation-delay:.16s}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+}
+.head{padding:var(--s-5) 0 var(--s-5)}
+h1{font:600 clamp(30px,1.4rem + 2vw,44px)/1.1 var(--font-display);letter-spacing:-.012em;margin:var(--s-2) 0 var(--s-3);max-width:24ch}
+h1 em{font-style:normal;color:var(--text-2)}
+.lede{font-size:19px;line-height:1.42;letter-spacing:.004em;color:var(--text-2);max-width:68ch;margin:0}
+h2{font:600 24px/1.17 var(--font-display);letter-spacing:.002em;margin:0 0 var(--s-1)}
+h3{font:600 17px/1.24 var(--font-display);margin:0 0 var(--s-1);letter-spacing:-.01em}
+.sub{font-size:14px;color:var(--text-2);margin:0 0 var(--s-3);letter-spacing:-.01em;line-height:1.4}
+.note{font-size:13px;line-height:1.45;color:var(--text-2);letter-spacing:-.01em}
+.note b{color:var(--text);font-weight:600}
+.panel{background:var(--panel);border-radius:18px;padding:var(--s-4)}
+.grid{display:grid;gap:var(--s-3);margin-bottom:var(--s-3)}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-side{grid-template-columns:minmax(0,1fr) 340px}
+.g-side-l{grid-template-columns:340px minmax(0,1fr)}
+@media (max-width:980px){.g2,.g3,.g-side,.g-side-l{grid-template-columns:1fr}}
+.toolbar{display:flex;flex-wrap:wrap;gap:var(--s-2) var(--s-3);align-items:center;margin-bottom:var(--s-3)}
+.toolbar .lbl{font-size:12px;color:var(--text-3);margin-right:-8px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);cursor:pointer;user-select:none}
+.chk input{accent-color:var(--accent)}
+section.block{margin:var(--s-7) 0 0}
+section.block > .shead{margin-bottom:var(--s-3)}
+.prose p{max-width:68ch;margin:0 0 var(--s-3);color:var(--text)}
+.prose p.note{color:var(--text-2)}
+details.how{margin-top:var(--s-3);font-size:14px;color:var(--text-2)}
+details.how summary{cursor:pointer;color:var(--link);list-style:none}
+details.how summary::-webkit-details-marker{display:none}
+details.how summary::after{content:" ›";}
+details.how[open] summary::after{content:" ‹"}
+details.how p{margin:var(--s-2) 0 0;max-width:72ch;line-height:1.5}
+
+/* ---------- chart ---------- */
+.chart{position:relative;width:100%;user-select:none;-webkit-user-select:none}
+.chart canvas{position:absolute;inset:0;width:100%;height:100%}
+.chart canvas.ov{cursor:crosshair}
+.tip{position:absolute;pointer-events:none;background:var(--panel);color:var(--text);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;
+  box-shadow:0 4px 24px rgba(0,0,0,.14),0 0 0 .5px var(--line);opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5;letter-spacing:-.005em;font-variant-numeric:tabular-nums}
+.tip.on{opacity:1}
+.tip b{font-weight:600}
+.tip .k{color:var(--text-2)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--text-2);margin-top:var(--s-2)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.legend i.dot{width:8px;height:8px;border-radius:50%}
+.legend i.dash{background:none!important;border-top:2px dashed currentColor;height:0}
+.cbar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2)}
+.cbar canvas{width:160px;height:8px;border-radius:4px}
+
+/* ---------- overview ---------- */
+.hbars{display:flex;flex-direction:column;gap:14px}
+.hbar{display:grid;grid-template-columns:96px minmax(0,1fr) 150px;align-items:center;gap:var(--s-3)}
+.hbar .nm{font-size:15px;font-weight:600}
+.hbar .track{position:relative;height:28px}
+.hbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;width:0;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.hbar .ext{position:absolute;top:0;bottom:0;border-radius:0 6px 6px 0;opacity:.35;width:0;transition:left .9s cubic-bezier(.2,.8,.2,1),width .9s cubic-bezier(.2,.8,.2,1)}
+.hbar .val{font-variant-numeric:tabular-nums;text-align:right}
+.hbar .val b{font:600 22px/1 var(--font-display);letter-spacing:-.02em}
+.hbar .val span{display:block;font-size:12px;color:var(--text-2);margin-top:2px}
+@media (max-width:640px){.hbar{grid-template-columns:70px minmax(0,1fr) 108px}.hbar .val b{font-size:18px}}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;border-top:1px solid var(--line);margin-top:var(--s-5)}
+.kpis div{padding:var(--s-3) var(--s-3) 0 0}
+.kpis b{display:block;font:600 28px/1.1 var(--font-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpis span{font-size:13px;color:var(--text-2)}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pipe{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--s-2);counter-reset:p}
+.pipe a{display:block;padding:var(--s-3);border-radius:14px;background:var(--panel);color:var(--text);transition:transform .2s}
+.pipe a:hover{text-decoration:none;background:var(--panel-2)}
+.pipe a b{display:block;font-size:15px;margin-bottom:4px}
+.pipe a b::before{counter-increment:p;content:counter(p);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--fill);font-size:12px;margin-right:8px;vertical-align:1px}
+.pipe a span{font-size:13px;color:var(--text-2);line-height:1.4;display:block}
+@media (max-width:860px){.pipe{grid-template-columns:1fr 1fr}}
+.minitab{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.minitab th{font-size:12px;font-weight:600;color:var(--text-2);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+.minitab td{padding:9px 8px;border-bottom:1px solid var(--grid);text-align:right}
+.minitab th:first-child,.minitab td:first-child{text-align:left;padding-left:0}
+.minitab tr:last-child td{border-bottom:0}
+.minitab .best{font-weight:600;color:var(--accent)}
+.sw{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.table-wrap{overflow-x:auto}
+
+/* ---------- mission cluster ---------- */
+.cluster{display:grid;grid-template-columns:260px minmax(0,1fr);gap:var(--s-3)}
+@media (max-width:980px){.cluster{grid-template-columns:1fr}}
+.dial{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dial svg{width:220px;height:190px}
+.dial .row{display:flex;gap:var(--s-4);font-size:13px;color:var(--text-2);margin-top:-6px;white-space:nowrap}
+.dial .row b{display:block;font:600 17px/1.2 var(--font-display);color:var(--text);font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s-3)}
+@media (max-width:1100px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--panel);border-radius:18px;padding:var(--s-3) var(--s-3) var(--s-3);display:flex;flex-direction:column;gap:10px;min-width:0}
+.tile .th{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.tile .th b{font-size:15px}
+.tile .th span{font-size:12px;color:var(--text-3)}
+.tile .big{font:600 34px/1 var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tile .big small{font:400 14px var(--font-sans);color:var(--text-2);letter-spacing:-.01em;margin-left:4px}
+.tile dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:13px;font-variant-numeric:tabular-nums}
+.tile dt{color:var(--text-2)}
+.tile dd{margin:0;text-align:right;font-weight:600}
+.pbar{position:relative;height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.pbar i{position:absolute;top:0;bottom:0;border-radius:3px;transition:left .15s linear,width .15s linear}
+.pbar::after{content:"";position:absolute;left:25%;top:-2px;bottom:-2px;width:1px;background:var(--line)}
+.tile .cum{font-size:13px;color:var(--text-2);border-top:1px solid var(--grid);padding-top:8px;font-variant-numeric:tabular-nums}
+.tile .cum b{color:var(--text);font-weight:600}
+
+/* ---------- gauges ---------- */
+.ringwrap{display:flex;flex-direction:column;align-items:center;gap:var(--s-3)}
+.ring{position:relative;width:220px;height:220px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .ctr b{font:600 52px/1 var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ring .ctr span{font-size:13px;color:var(--text-2);margin-top:4px}
+.statlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-3) var(--s-3);width:100%}
+.stat b{display:block;font:600 22px/1.15 var(--font-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--text-2);line-height:1.3;display:block}
+.stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s-3)}
+.stats4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s-3)}
+@media (max-width:640px){.stats4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.loss{display:flex;flex-direction:column;gap:6px;margin-top:var(--s-2)}
+.loss .lr{display:grid;grid-template-columns:120px minmax(0,1fr) 64px;gap:8px;align-items:center;font-size:13px}
+.loss .lr span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-2)}
+.loss .lt{height:8px;border-radius:4px;background:var(--fill);position:relative;overflow:hidden}
+.loss .lt i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--chart-muted);transition:width .18s}
+.gearbars{display:flex;align-items:flex-end;gap:3px;height:80px;margin-top:var(--s-2)}
+.gearbars div{flex:1;background:var(--chart-context);border-radius:3px 3px 0 0;position:relative;min-height:1px;transition:height .6s cubic-bezier(.2,.8,.2,1)}
+.gearbars div.cur{background:var(--accent)}
+.gearlbl{display:flex;gap:3px;font-size:10px;color:var(--text-3);margin-top:4px}
+.gearlbl span{flex:1;text-align:center}
+input[type=range]{accent-color:var(--accent);width:100%}
+
+/* ---------- run & inputs ---------- */
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.steps li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:var(--s-2);padding:10px 0;border-bottom:1px solid var(--grid);font-size:15px;color:var(--text-3)}
+.steps li:last-child{border-bottom:0}
+.steps li .ic{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center}
+.steps li.now{color:var(--text)}
+.steps li.now .ic{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+.steps li.done{color:var(--text)}
+.steps li.done .ic{border-color:var(--text-2);background:var(--text-2)}
+.steps li.done .ic::after{content:"";width:6px;height:10px;border:solid var(--panel);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.steps li small{font-size:12px;color:var(--text-3)}
+.bar{height:4px;border-radius:2px;background:var(--fill);overflow:hidden;margin:var(--s-3) 0}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s ease}
+pre.log{font:12px/1.5 var(--font-mono);background:var(--panel-2);color:var(--text-2);border-radius:12px;padding:12px;max-height:220px;overflow:auto;white-space:pre-wrap;margin:var(--s-2) 0 0;letter-spacing:0}
+.inputs{display:flex;flex-direction:column;gap:var(--s-5)}
+.igroup h3{margin-bottom:2px}
+.irow{display:grid;grid-template-columns:minmax(0,1fr) 140px 90px 110px;gap:var(--s-3);align-items:center;padding:8px 0;border-bottom:1px solid var(--grid);font-size:14px}
+.irow:last-child{border-bottom:0}
+.irow input,.irow select{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.irow select{text-align:left}
+.irow input:focus,.irow select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.irow.dirty input,.irow.dirty select{border-color:var(--accent)}
+.irow .u{color:var(--text-3);font-size:12px}
+.irow .o{font-size:12px;color:var(--text-3);text-align:right}
+.irow .o button{border:0;background:none;color:var(--link);cursor:pointer;font-size:12px;padding:0}
+.irow.changed label::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:8px;vertical-align:2px}
+@media (max-width:640px){.irow{grid-template-columns:minmax(0,1fr) 110px;}.irow .u,.irow .o{display:none}}
+.savebar{position:sticky;bottom:calc(var(--player-h) + 12px);display:flex;gap:var(--s-2);align-items:center;justify-content:flex-end;flex-wrap:wrap;
+  background:var(--nav-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:10px 12px;margin-top:var(--s-3);box-shadow:0 0 0 .5px var(--line)}
+.savebar .msg{margin-right:auto;font-size:13px;color:var(--text-2)}
+.empty{padding:var(--s-6) var(--s-4);text-align:center;color:var(--text-2)}
+.empty b{display:block;color:var(--text);font-size:21px;margin-bottom:6px;font-family:var(--font-display)}
+.figs img{width:100%;border-radius:12px;background:#fff;margin-top:var(--s-2)}
+.files a{display:inline-flex;align-items:center;gap:6px;margin:0 var(--s-3) var(--s-2) 0;font-size:14px}
+
+/* ---------- player ---------- */
+.player{position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--player-h);background:var(--nav-bg);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line)}
+.player .in{max-width:var(--wide);margin:0 auto;height:100%;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;align-items:center;gap:var(--s-3);padding:0 16px}
+.play{width:40px;height:40px;border-radius:50%;border:0;background:var(--accent);color:#fff;cursor:pointer;display:grid;place-items:center;flex:none}
+.play:hover{filter:brightness(1.08)}
+.play svg{width:16px;height:16px}
+.ptime{font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.25}
+.ptime b{color:var(--text);font-weight:600;font-size:15px;display:block}
+.scrub{position:relative;height:40px;cursor:pointer}
+.scrub canvas{position:absolute;inset:0;width:100%;height:100%}
+.pread{font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;line-height:1.25}
+.pread b{color:var(--text);font-weight:600}
+@media (max-width:860px){.pread{display:none}.player .in{grid-template-columns:auto auto minmax(0,1fr) auto}}
+@media (max-width:560px){.ptime{display:none}.player .in{grid-template-columns:auto minmax(0,1fr) auto}}
+.loading{opacity:.4;transition:opacity .2s}
 </style>
 </head>
 <body>
-<header>
-  <div><h1>mini-VECTO</h1><p>Heavy-duty powertrain simulator · TRA545 Project #4 · diesel, HVO100, hydrogen engine, fuel cell, battery electric</p></div>
-  <div class="run">
-    <label class="chk"><input type="checkbox" id="keep"> keep driving cycles (faster)</label>
-    <button class="primary" id="runBtn">▶ Run model</button>
+<nav class="top"><div class="in">
+  <a class="brand" href="#overview">mini-VECTO <span>0.3</span></a>
+  <div class="tabs" id="tabs">
+    <a href="#overview" data-v="overview">Overview</a>
+    <a href="#mission" data-v="mission">Mission</a>
+    <a href="#engine" data-v="engine">Engine map</a>
+    <a href="#motor" data-v="motor">E-motor</a>
+    <a href="#fuelcell" data-v="fuelcell">Fuel cell</a>
+    <a href="#battery" data-v="battery">Battery</a>
+    <a href="#compare" data-v="compare">Compare</a>
+    <a href="#run" data-v="run">Run &amp; inputs</a>
   </div>
-</header>
-<div class="progress" id="progress"></div>
-<main>
-  <pre id="log"></pre>
+  <div class="navr">
+    <button class="iconbtn" id="theme" title="Appearance: automatic" aria-label="Change appearance">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
+    </button>
+    <button class="pill" id="navRun"><span class="ring-sm"></span><span class="t">Run model</span></button>
+  </div>
+</div></nav>
 
-  <section>
-    <h2>How mini-VECTO works</h2>
-    <p class="sub">A backward simulation: from the speed the vehicle must have, back to the fuel or electricity it needs. Five steps, every 10 m of the mission.</p>
-    <div class="card stepper">
-      <div class="steps" id="stepNav"></div>
-      <div class="panel" id="stepPanel"></div>
+<div class="localbar">
+  <p class="eyebrow" id="eyebrow">TRA545 Hydrogen Technologies · heavy-duty powertrain simulator</p>
+  <div class="seg" id="missionSeg"></div>
+</div>
+
+<main id="main">
+  <!-- OVERVIEW -->
+  <section class="view" id="v-overview">
+    <div class="head rise">
+      <h1 id="ovTitle">Five powertrains on the same mission, every 10 metres.</h1>
+      <p class="lede">mini-VECTO drives one vehicle along a mission and works back from the speed it must keep to the fuel, hydrogen or electricity it needs. Diesel, HVO100, hydrogen engine, fuel cell and battery-electric all drive exactly the same cycle, so the differences below come from the powertrain alone.</p>
+    </div>
+    <div class="panel rise">
+      <h2 id="ovBarsTitle">Energy per kilometre</h2>
+      <p class="sub">Energy taken from the tank or the battery, kWh per km. Shorter is better. Native units on the right.</p>
+      <div class="hbars" id="ovBars"></div>
+      <div class="legend" id="ovLegend"></div>
+      <div class="kpis" id="ovKpis"></div>
+    </div>
+    <section class="block rise">
+      <div class="grid g2">
+        <div class="panel">
+          <h3 id="ovEffTitle">Share of the energy supplied that becomes traction</h3>
+          <p class="sub">Traction work at the wheels ÷ energy supplied: from the tank or battery, plus what regenerative braking puts back (electric drives only).</p>
+          <div id="ovEff" class="hbars"></div>
+        </div>
+        <div class="panel">
+          <h3>Mass, braking and feasibility</h3>
+          <p class="sub" id="ovMassSub">Extra mass of each powertrain over the diesel vehicle, and braking energy lost in the friction brakes.</p>
+          <div class="table-wrap"><table class="minitab" id="ovMass"></table></div>
+        </div>
+      </div>
+    </section>
+    <section class="block rise">
+      <div class="shead"><h2>How the model works</h2><p class="sub">A backward simulation in five steps, repeated every 10 m of the mission. Each step opens the view that shows it.</p></div>
+      <div class="pipe">
+        <a href="#mission"><b>Route</b><span>Speed limits, curves, grade and stops along the mission (VECTO cycles for the buses).</span></a>
+        <a href="#mission"><b>Driver</b><span>Brakes in time and accelerates as far as driver and power allow: the speed really driven.</span></a>
+        <a href="#mission"><b>Wheel force</b><span>Inertia + grade + rolling + air drag, with each powertrain's own mass.</span></a>
+        <a href="#engine"><b>Powertrain</b><span>Gearbox and engine map, or e-motor with battery and fuel cell.</span></a>
+        <a href="#compare"><b>Energy</b><span>Fuel, hydrogen or electricity per step, summed per mission and exported to Excel.</span></a>
+      </div>
+    </section>
+  </section>
+
+  <!-- MISSION -->
+  <section class="view" id="v-mission">
+    <div class="head rise">
+      <h1 id="miTitle">Mission</h1>
+      <p class="lede" id="miLede">Press play below to drive the mission. Every instrument follows the replay; click or drag on the chart to jump.</p>
+    </div>
+    <div class="cluster rise">
+      <div class="panel dial">
+        <svg viewBox="0 0 220 190" id="speedo"></svg>
+        <div class="row"><div><b id="lvGrade">–</b>grade</div><div><b id="lvAlt">–</b>altitude</div><div><b id="lvPw">–</b>at wheels</div></div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+    </div>
+    <section class="block rise">
+      <div class="panel">
+        <div class="toolbar" style="justify-content:space-between">
+          <div><h3 id="miProfTitle">Speed and altitude along the route</h3><p class="sub" style="margin:0">Click to jump, drag across the chart to zoom, double-click to see the whole mission.</p></div>
+          <div class="seg small" id="miMode"></div>
+        </div>
+        <div id="miProfile"></div>
+        <div class="legend"><span><i style="background:var(--chart-context)"></i>Speed limit, incl. curves</span><span><i style="background:var(--text)"></i>Speed driven</span><span><i style="background:var(--chart-context);opacity:.5;height:8px"></i>Altitude (right axis)</span><span><i class="dot" style="background:var(--c-bev)"></i>Stop</span></div>
+        <div id="miPower" style="margin-top:var(--s-3)"></div>
+        <div class="legend"><span><i style="background:var(--text)"></i>Power at the wheels (negative = braking)</span></div>
+        <details class="how"><summary>What happens in these steps</summary>
+          <p><b>Route.</b> missions.py describes the mission along distance: speed limit, curve radius, grade, surface and stops. Each curve lowers the limit so that the lateral acceleration v²/R stays within what drivers accept (Trafikverket). The buses run on the VECTO Urban and Coach cycles.</p>
+          <p><b>Driver.</b> A backward sweep from the end makes the vehicle brake in time for every limit and stop (v² = v_next² + 2·d·Δs). A forward sweep accelerates as the driver wishes and the engine power allows. The cycle is built once and every powertrain drives it.</p>
+          <p><b>Wheel force.</b> F = m_eff·a + m·g·sin α + c_r·m·g·cos α + ½·ρ·C_dA·v². Battery and hydrogen tanks add mass, so the same cycle needs more force. Negative force is braking: an electric drive recovers part of it, an engine wastes it in the brakes.</p>
+        </details>
+      </div>
+    </section>
+  </section>
+
+  <!-- ENGINE -->
+  <section class="view" id="v-engine">
+    <div class="head rise">
+      <h1 id="enTitle">Engine map</h1>
+      <p class="lede">The engine map gives the fuel flow at every speed and torque. At each step the model tries every gear, keeps the one that burns the least fuel, and reads the fuel here. The dots are where the engine really worked on this mission.</p>
+    </div>
+    <div class="grid g-side rise">
+      <div class="panel">
+        <div class="toolbar">
+          <span class="lbl">Map</span><div class="seg small" id="enSrc"></div>
+          <span class="lbl">Colour</span><div class="seg small" id="enLayer"></div>
+          <span class="lbl">Powertrain</span><div class="seg small" id="enPt"></div>
+        </div>
+        <div id="enChart"></div>
+        <div class="toolbar" style="margin:var(--s-2) 0 0;justify-content:space-between">
+          <div class="legend" style="margin:0" id="enLegend"></div>
+          <div class="cbar"><span id="enCbLo"></span><canvas id="enCb" width="160" height="8"></canvas><span id="enCbHi"></span></div>
+        </div>
+        <div class="toolbar" style="margin:var(--s-2) 0 0">
+          <label class="chk"><input type="checkbox" id="enShowOps" checked> Operating points</label>
+          <label class="chk"><input type="checkbox" id="enShowMeas"> Measured test points</label>
+          <label class="chk"><input type="checkbox" id="enShowPow" checked> Constant-power lines</label>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>On this mission</h3>
+        <div class="statlist" id="enStats" style="margin-top:var(--s-3)"></div>
+        <h3 style="margin-top:var(--s-5)">Time in each gear</h3>
+        <p class="sub" style="margin:0">Driving time per gear of the 12-speed I-Shift. Blue = gear now in the replay.</p>
+        <div class="gearbars" id="enGears"></div><div class="gearlbl" id="enGearLbl"></div>
+        <div id="enLive" class="note" style="margin-top:var(--s-4)"></div>
+      </div>
+    </div>
+    <div class="panel rise">
+      <h3>How to read the map</h3>
+      <div class="prose note" id="enHow"></div>
     </div>
   </section>
 
-  <section>
-    <h2>Results</h2>
-    <p class="sub" id="updated">Loading…</p>
-    <div class="tabs" id="tabs"></div>
-    <div id="results"></div>
+  <!-- MOTOR -->
+  <section class="view" id="v-motor">
+    <div class="head rise">
+      <h1 id="moTitle">Electric motor</h1>
+      <p class="lede">Motor and inverter losses come from a loss model scaled to a 96.5 % peak (Chalmers reference machines). Above the axis the motor drives; below it works as a generator and recovers braking energy into the battery.</p>
+    </div>
+    <div class="grid g-side rise">
+      <div class="panel">
+        <div class="toolbar">
+          <span class="lbl">Vehicle</span><div class="seg small" id="moPt"></div>
+          <label class="chk"><input type="checkbox" id="moShowOps" checked> Operating points</label>
+        </div>
+        <div id="moChart"></div>
+        <div class="toolbar" style="margin:var(--s-2) 0 0;justify-content:space-between">
+          <div class="legend" style="margin:0" id="moLegend"></div>
+          <div class="cbar"><span>70 %</span><canvas id="moCb" width="160" height="8"></canvas><span>97 %</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 id="moLossTitle">Losses at this point</h3>
+        <p class="sub" id="moLossSub">Hover the map, or play the mission.</p>
+        <div class="big" id="moEta" style="font:600 44px/1 var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums">–</div>
+        <div class="note" id="moPt2" style="margin-top:4px">efficiency</div>
+        <div class="loss" id="moLoss"></div>
+        <div class="statlist" id="moStats" style="margin-top:var(--s-5)"></div>
+      </div>
+    </div>
+    <div class="panel rise">
+      <h3>Where the losses come from</h3>
+      <div class="prose note">
+        <p><b>Copper</b> losses grow with the square of the torque (current through the windings): the motor is least efficient at high torque and low speed, as when a bus pulls away. <b>Iron</b> losses grow with speed (magnetising the core) and <b>friction and windage</b> with the cube of speed. The <b>inverter</b> adds switching and conduction losses. The best efficiency sits in the middle, at moderate torque and speed.</p>
+        <p>Speed is shown per unit of the base speed, the speed above which the motor can no longer give full torque and runs at constant power (the curved limit). <span id="moGears"></span></p>
+      </div>
+    </div>
   </section>
 
-  <section>
-    <h2>All missions at a glance</h2>
-    <p class="sub">Energy at the tank or battery, kWh per km. Lower is better; the native units are in each mission's table.</p>
-    <div class="card" id="overview"></div>
+  <!-- FUEL CELL -->
+  <section class="view" id="v-fuelcell">
+    <div class="head rise">
+      <h1 id="fcTitle">Fuel cell</h1>
+      <p class="lede">The fuel cell system turns hydrogen into electricity with an efficiency that depends on load. It is most efficient at part load, so the buffer battery takes the peaks and lets the fuel cell run smoothly.</p>
+    </div>
+    <div class="grid g-side rise">
+      <div class="panel">
+        <h3>System efficiency and where the fuel cell runs</h3>
+        <p class="sub">Net power at the fuel cell output. Grey bars: share of the mission time spent at each load.</p>
+        <div id="fcChart"></div>
+        <div class="legend"><span><i style="background:var(--c-fcev)"></i>New stack (BOL)</span><span><i class="dash" style="color:var(--chart-muted)"></i>Aged stack (EOL)</span><span><i style="background:var(--accent)"></i>Stack at the selected age</span><span><i style="background:var(--chart-context);height:8px"></i>Time at this load</span></div>
+        <div style="margin-top:var(--s-4);max-width:520px">
+          <div class="toolbar" style="margin-bottom:4px;justify-content:space-between"><span class="note"><b>Stack age</b></span><span class="note num" id="fcAgeLbl">new</span></div>
+          <input type="range" id="fcAge" min="0" max="100" step="1" value="0">
+          <div class="toolbar" style="justify-content:space-between;margin:0"><span class="note">New (BOL)</span><span class="note">End of life (EOL)</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>On this mission</h3>
+        <div class="statlist" id="fcStats" style="margin-top:var(--s-3)"></div>
+        <h3 style="margin-top:var(--s-5)">Hydrogen flow</h3>
+        <p class="sub" style="margin:0">kg of H₂ per hour against net power. Dashed: what it would be at constant peak efficiency.</p>
+        <div id="fcFlow"></div>
+      </div>
+    </div>
+    <div class="panel rise">
+      <div class="toolbar" style="justify-content:space-between"><div><h3>The battery takes the peaks, the fuel cell follows the average</h3>
+        <p class="sub" style="margin:0">Ten minutes around the replay position. The fuel cell follows a 60 s moving average of the demand plus a correction that keeps the buffer battery near its target charge.</p></div></div>
+      <div id="fcSplit"></div>
+      <div class="legend"><span><i style="background:var(--chart-muted)"></i>Electric demand (motor + auxiliaries)</span><span><i style="background:var(--c-fcev)"></i>Fuel cell</span><span><i style="background:var(--c-bev)"></i>Buffer battery (negative = charging)</span></div>
+      <details class="how"><summary>Why the efficiency curve has this shape</summary>
+        <p>At high load the cell voltage drops (activation, ohmic and mass-transport losses grow with current), so each kilowatt costs more hydrogen. At very low load the air compressor and the other auxiliaries of the system eat a large share of a small output. The peak of the system curve therefore sits at about a quarter of rated power. Ageing lowers the whole curve: the model gives every result for a new and an aged stack.</p>
+        <p>Curve points at 25 % and 100 % load: DOE Program Record 26002 (new) and Wang &amp; Ahluwalia 2025 (aged); the points in between are interpolated (assumption).</p>
+      </details>
+    </div>
   </section>
 
-  <section>
-    <h2>Files</h2>
-    <div class="card"><div class="files" id="files"></div><div class="figs" id="figs"></div></div>
+  <!-- BATTERY -->
+  <section class="view" id="v-battery">
+    <div class="head rise">
+      <h1 id="baTitle">Battery</h1>
+      <p class="lede" id="baLede">State of charge, power and losses of the traction battery (battery-electric) and of the buffer battery (fuel cell vehicle).</p>
+    </div>
+    <div class="toolbar rise"><span class="lbl">Battery</span><div class="seg small" id="baPt"></div></div>
+    <div class="grid g-side-l rise">
+      <div class="panel ringwrap">
+        <div class="ring"><svg viewBox="0 0 220 220" id="baRing"></svg><div class="ctr"><b id="baSoc">–</b><span>state of charge</span></div></div>
+        <div class="statlist" id="baLive"></div>
+      </div>
+      <div class="panel">
+        <h3>State of charge along the mission</h3>
+        <p class="sub">Both batteries; the one selected is in colour. Dotted lines: the usable window.</p>
+        <div id="baSocChart"></div>
+      </div>
+    </div>
+    <div class="grid g2 rise">
+      <div class="panel">
+        <h3>How hard the battery works</h3>
+        <p class="sub">Share of driving time at each C-rate (battery power ÷ capacity). Left: charging, right: discharging.</p>
+        <div id="baHist"></div>
+      </div>
+      <div class="panel">
+        <h3>On this mission</h3>
+        <div class="statlist" id="baStats" style="margin-top:var(--s-3)"></div>
+        <p class="note" id="baNote" style="margin-top:var(--s-4)"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="view" id="v-compare">
+    <div class="head rise">
+      <h1 id="coTitle">All missions</h1>
+      <p class="lede">The four missions side by side. Energy per km is not yet energy per passenger-km or per tonne-km: the functional units come in the TCO and LCA work.</p>
+    </div>
+    <div class="panel rise">
+      <h3>Energy per kilometre, every mission</h3>
+      <p class="sub">kWh per km from the tank or battery.</p>
+      <div id="coChart"></div>
+      <div class="legend" id="coLegend"></div>
+    </div>
+    <div class="panel rise" style="margin-top:var(--s-3)">
+      <h3>Consumption in native units</h3>
+      <p class="sub">FCEV: new / aged stack. BEV: from the battery / from the grid including charging losses.</p>
+      <div class="table-wrap"><table class="minitab" id="coTable"></table></div>
+    </div>
+    <div class="grid g2 rise" style="margin-top:var(--s-3)">
+      <div class="panel"><h3>Excel workbooks and tables</h3><p class="sub">One workbook per powertrain, one row every 10 m, with live formulas and the notes on every assumption.</p><div class="files" id="coFiles"></div></div>
+      <div class="panel"><h3>Figures</h3><p class="sub">Written by the model run.</p><div class="files" id="coFigs"></div></div>
+    </div>
+  </section>
+
+  <!-- RUN -->
+  <section class="view" id="v-run">
+    <div class="head rise">
+      <h1>Change an input, run the model, see the new results in about a minute.</h1>
+      <p class="lede">The run executes run_all.py in the background: driving cycles, engines, electric powertrains, figures and Excel. Every view of this dashboard refreshes when it is done.</p>
+    </div>
+    <div class="grid g-side-l rise" style="align-items:start">
+      <div class="panel">
+        <h3>Run</h3>
+        <p class="sub">Options for this run only.</p>
+        <div class="toolbar" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <span class="note">Driving cycles</span><div class="seg small" id="rCycles"></div>
+          <span class="note" style="margin-top:8px">Engine map</span><div class="seg small" id="rMap"></div>
+        </div>
+        <button class="pill big" id="runBtn" style="margin-top:var(--s-3);width:100%;justify-content:center">Run model</button>
+        <div class="bar"><i id="runBar"></i></div>
+        <ul class="steps" id="runSteps"></ul>
+        <p class="note" id="runMsg" style="margin-top:var(--s-3)"></p>
+        <details class="how" id="runLogWrap"><summary>Log</summary><pre class="log" id="runLog"></pre></details>
+      </div>
+      <div class="panel">
+        <h3>Inputs</h3>
+        <p class="sub">The main values of vehicles.json. Saving writes the file; the first save keeps the original as vehicles.json.bak. Everything else (gear ratios, fuel cell curve, routes) stays in vehicles.json and missions.py.</p>
+        <div class="seg small" id="inTabs" style="margin-bottom:var(--s-3)"></div>
+        <div class="inputs" id="inputs"></div>
+        <div class="savebar"><span class="msg" id="inMsg">No changes.</span>
+          <button class="pill ghost" id="inRestore" style="display:none">Restore original</button>
+          <button class="pill ghost" id="inDiscard" disabled>Discard</button>
+          <button class="pill ghost" id="inSave" disabled>Save</button>
+          <button class="pill" id="inSaveRun" disabled>Save and run</button>
+        </div>
+      </div>
+    </div>
   </section>
 </main>
 
+<div class="player" id="player"><div class="in">
+  <button class="play" id="playBtn" aria-label="Play"><svg viewBox="0 0 16 16" id="playIc"><path d="M4 2.5v11l9.5-5.5z" fill="currentColor"/></svg></button>
+  <div class="ptime"><b id="pT">0:00</b><span id="pTot">of –</span></div>
+  <div class="scrub" id="scrub"><canvas id="scrubC"></canvas></div>
+  <div class="seg small" id="rateSeg"></div>
+  <div class="pread" id="pRead"><b>–</b><br>–</div>
+</div></div>
+
 <script>
-const PT = {diesel:"Diesel",hvo100:"HVO100",h2ice:"H2-ICE",fcev:"FCEV",bev:"BEV"};
-const COL = k => getComputedStyle(document.documentElement).getPropertyValue("--c-"+k).trim();
-const fmt = (x,d=1) => x==null||x===""?"–":Number(x).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
-const $ = id => document.getElementById(id);
-let DATA=null, MISSION="urban_bus", STEP=0;
-const NS="http://www.w3.org/2000/svg";
-function svg(w,h){const s=document.createElementNS(NS,"svg");s.setAttribute("viewBox",`0 0 ${w} ${h}`);return s}
-function el(p,tag,a={},text){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(text!=null)e.textContent=text;p.appendChild(e);return e}
+"use strict";
+/* ============================================================ basics */
+const $ = s => document.querySelector(s);
+const PTS = [{key:"diesel",name:"Diesel"},{key:"hvo100",name:"HVO100"},{key:"h2ice",name:"H2-ICE"},{key:"fcev",name:"FCEV"},{key:"bev",name:"BEV"}];
+const PTNAME = Object.fromEntries(PTS.map(p=>[p.key,p.name]));
+const MSHORT = {timber_empty:"Timber · empty", timber_loaded:"Timber · loaded", urban_bus:"Urban bus", coach:"Coach"};
+const MLONG = {timber_empty:"empty timber truck", timber_loaded:"loaded timber truck", urban_bus:"urban bus", coach:"coach"};
+const VNAME = {timber_truck:"timber truck", urban_bus:"urban bus", coach:"coach"};
+const FONT = getComputedStyle(document.documentElement).getPropertyValue("--font-sans");
+const store = {get(k,d){try{const v=localStorage.getItem("mv."+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+               set(k,v){try{localStorage.setItem("mv."+k,JSON.stringify(v))}catch(e){}}};
+const S = {data:null, model:null, traces:{}, mission:store.get("mission","urban_bus"), view:"overview",
+           engSrc:null, engLayer:"eta", engPt:"diesel", motorPt:"bev", fcAge:0, battPt:"bev", zoom:null, hoverMotor:null};
+const P = {i:0, playing:false, rate:store.get("rate",30), simT:0, last:0};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fmt=(x,d=1)=>x==null||x===""||!isFinite(x)?"–":Number(x).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtT=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(ss).padStart(2,"0")};
+let CS=null; const col=k=>{if(!CS)CS=getComputedStyle(document.documentElement);return CS.getPropertyValue(k).trim()};
+const ptCol=k=>col("--c-"+k);
+function hexA(hex,a){hex=hex.replace("#","");if(hex.length===3)hex=hex.split("").map(c=>c+c).join("");const n=parseInt(hex,16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+async function api(p,o){const r=await fetch(p,o);const j=await r.json().catch(()=>({ok:false,message:"bad response"}));if(!r.ok&&j.ok===undefined)j.ok=false;return j}
+function bisect(a,x){let lo=0,hi=a.length-1;if(x<=a[0])return 0;if(x>=a[hi])return hi;while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=x)lo=m;else hi=m}return lo}
+function lerp(xs,ys,x){if(x<=xs[0])return ys[0];for(let i=1;i<xs.length;i++)if(x<=xs[i])return ys[i-1]+(x-xs[i-1])/(xs[i]-xs[i-1])*(ys[i]-ys[i-1]);return ys[ys.length-1]}
+function ticks(a,b,n=5){const sp=b-a;if(!(sp>0))return[a];const s0=sp/n,mag=10**Math.floor(Math.log10(s0)),f=s0/mag,st=(f<1.5?1:f<3?2:f<7?5:10)*mag;const o=[];for(let v=Math.ceil(a/st-1e-9)*st;v<=b+st*1e-9;v+=st)o.push(+v.toFixed(10));return o}
+function countUp(el,to,d=1,suffix="",dur=700){if(!el)return;const from=parseFloat(el.dataset.v||"0")||0;el.dataset.v=to;
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches||!isFinite(to)){el.textContent=fmt(to,d)+suffix;return}
+  const t0=performance.now();const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmt(from+(to-from)*e,d)+suffix;if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+function seg(el,items,cur,on){el.innerHTML='<span class="thumb"></span>'+items.map(it=>`<button data-k="${it.k}" ${it.disabled?"disabled":""}>${it.t}</button>`).join("");
+  const set=k=>{el.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.k===String(k)));moveThumb(el)};
+  el.onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;set(b.dataset.k);on(b.dataset.k)};set(cur);el._set=set;return set}
+function moveThumb(el){const b=el.querySelector("button.on"),t=el.querySelector(".thumb");if(!b||!t)return;
+  if(!b.offsetWidth){requestAnimationFrame(()=>moveThumb(el));return}t.style.left=b.offsetLeft+"px";t.style.width=b.offsetWidth+"px"}
+window.addEventListener("resize",()=>document.querySelectorAll(".seg").forEach(moveThumb));
 
-/* ---------------- charts ---------------- */
-function lineChart(xs, series, o={}){
-  const W=760,H=o.h||260,L=46,R=o.y2?52:16,T=14,B=34, s=svg(W,H);
-  const xmin=Math.min(...xs), xmax=Math.max(...xs);
-  const ymax=o.ymax||Math.max(...series.filter(q=>!q.y2).flatMap(q=>q.y))*1.08||1;
-  const X=x=>L+(x-xmin)/(xmax-xmin||1)*(W-L-R), Y=y=>H-B-y/ymax*(H-T-B);
-  let y2min=0,y2max=1;
-  const s2=series.filter(q=>q.y2);
-  if(s2.length){y2min=Math.min(...s2[0].y);y2max=Math.max(...s2[0].y)+1e-6}
-  const Y2=y=>H-B-(y-y2min)/(y2max-y2min)*(H-T-B)*0.55;
-  for(let i=0;i<=4;i++){const v=ymax*i/4;el(s,"line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:"#E3E0D7"});el(s,"text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":11,fill:"#7A858E"},Math.round(v))}
-  for(let i=0;i<=5;i++){const v=xmin+(xmax-xmin)*i/5;el(s,"text",{x:X(v),y:H-B+16,"text-anchor":"middle","font-size":11,fill:"#7A858E"},fmt(v,xmax-xmin<10?1:0))}
-  el(s,"text",{x:W-R,y:H-4,"text-anchor":"end","font-size":11,fill:"#7A858E"},o.xlabel||"");
-  el(s,"text",{x:4,y:10,"font-size":11,fill:"#7A858E"},o.ylabel||"");
-  for(const q of series){
-    const yf=q.y2?Y2:Y;
-    const d=xs.map((x,i)=>`${i?"L":"M"}${X(x).toFixed(1)},${yf(q.y[i]).toFixed(1)}`).join("");
-    if(q.area) el(s,"path",{d:d+`L${X(xmax)},${H-B}L${X(xmin)},${H-B}Z`,fill:q.color,opacity:.16,stroke:"none"});
-    else el(s,"path",{d,fill:"none",stroke:q.color,"stroke-width":q.w||1.6,"stroke-dasharray":q.dash||""});
+/* ============================================================ colour maps */
+const RAMPS = {
+  cool:{light:["#f4f6f8","#e2edef","#c2e0dc","#8fcac5","#5aaac6","#2f7bb0"], dark:["#141618","#1a2a2e","#1d4247","#24626a","#2f8592","#4aa6bd"]},
+  warm:{light:["#f7f3ec","#efdcbc","#e3b37f","#d3814f","#b4502f","#7f2a1d"], dark:["#1c1714","#3b2a1b","#6a4325","#a35f30","#d8874a","#ffc48a"]}};
+function isDark(){const t=document.documentElement.dataset.theme;return t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)}
+function rgb(h){const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255]}
+function ramp(name){const st=RAMPS[name][isDark()?"dark":"light"].map(rgb);return t=>{t=clamp(t,0,1)*(st.length-1);const i=Math.min(st.length-2,Math.floor(t)),f=t-i;return st[i].map((c,k)=>Math.round(c+(st[i+1][k]-c)*f))}}
+function drawCbar(cv,f){const c=cv.getContext("2d"),w=cv.width,h=cv.height;for(let x=0;x<w;x++){const [r,g,b]=f(x/(w-1));c.fillStyle=`rgb(${r},${g},${b})`;c.fillRect(x,0,1,h)}}
+
+/* ============================================================ chart toolkit */
+class Chart{
+  constructor(host,o={}){
+    this.host=typeof host==="string"?$(host):host;this.o=o;this.m=Object.assign({l:52,r:18,t:28,b:36},o.m||{});
+    this.host.classList.add("chart");this.host.style.height=(o.h||320)+"px";this.host.innerHTML="";
+    this.c0=document.createElement("canvas");this.c1=document.createElement("canvas");this.c1.className="ov";
+    this.tip=document.createElement("div");this.tip.className="tip";this.host.append(this.c0,this.c1,this.tip);
+    this.x0=0;this.x1=1;this.y0=0;this.y1=1;
+    new ResizeObserver(()=>this.resize()).observe(this.host);
+    const pos=e=>{const r=this.c1.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+    this.c1.addEventListener("mousemove",e=>{const[x,y]=pos(e);if(this.drag){this.drag.x1=x;this.redrawOver();return}this.mx=x;this.my=y;this.onmove&&this.onmove(x,y);this.redrawOver()});
+    this.c1.addEventListener("mouseleave",()=>{this.mx=null;this.hideTip();this.onleave&&this.onleave();this.redrawOver()});
+    this.c1.addEventListener("mousedown",e=>{if(!this.onbrush)return;const[x]=pos(e);this.drag={x0:x,x1:x}});
+    window.addEventListener("mouseup",e=>{if(!this.drag)return;const d=this.drag;this.drag=null;
+      if(Math.abs(d.x1-d.x0)>8){const a=this.ix(Math.min(d.x0,d.x1)),b=this.ix(Math.max(d.x0,d.x1));this.onbrush(a,b)}
+      else if(this.onclick){const[x,y]=pos(e);this.onclick(x,y)}this.redrawOver()});
+    this.c1.addEventListener("click",e=>{if(this.onbrush)return;if(this.onclick){const[x,y]=pos(e);this.onclick(x,y)}});
+    this.c1.addEventListener("dblclick",()=>this.ondbl&&this.ondbl());
+    this.c1.addEventListener("touchstart",e=>{const t=e.touches[0];const r=this.c1.getBoundingClientRect();this.onclick&&this.onclick(t.clientX-r.left,t.clientY-r.top)},{passive:true});
   }
-  if(o.marks) for(const m of o.marks) el(s,"line",{x1:X(m),x2:X(m),y1:H-B,y2:H-B-7,stroke:"#A8521A","stroke-width":1.5});
-  let lx=L+8; for(const q of series){ if(!q.label)continue; el(s,"rect",{x:lx,y:T,width:12,height:4,fill:q.color,opacity:q.area?.5:1}); el(s,"text",{x:lx+16,y:T+6,"font-size":12,fill:"#3D4A55"},q.label); lx+=q.label.length*6.6+34 }
-  return s;
+  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;const d=window.devicePixelRatio||1;
+    for(const c of[this.c0,this.c1]){c.width=Math.round(w*d);c.height=Math.round(h*d)}
+    this.ctx0=this.c0.getContext("2d");this.ctx1=this.c1.getContext("2d");this.ctx0.setTransform(d,0,0,d,0,0);this.ctx1.setTransform(d,0,0,d,0,0);
+    this.W=w;this.H=h;this.redraw()}
+  get pw(){return this.W-this.m.l-this.m.r} get ph(){return this.H-this.m.t-this.m.b}
+  X(v){return this.m.l+(v-this.x0)/(this.x1-this.x0)*this.pw}
+  Y(v){return this.m.t+(1-(v-this.y0)/(this.y1-this.y0))*this.ph}
+  ix(p){return this.x0+(p-this.m.l)/this.pw*(this.x1-this.x0)}
+  iy(p){return this.y0+(1-(p-this.m.t)/this.ph)*(this.y1-this.y0)}
+  inside(x,y){return x>=this.m.l&&x<=this.W-this.m.r&&y>=this.m.t&&y<=this.H-this.m.b}
+  redraw(){if(!this.W)return;CS=null;const c=this.ctx0;c.clearRect(0,0,this.W,this.H);c.font="12px "+FONT;this.draw&&this.draw(c,this);this.redrawOver()}
+  redrawOver(){if(!this.W)return;const c=this.ctx1;c.clearRect(0,0,this.W,this.H);c.font="12px "+FONT;this.over&&this.over(c,this);
+    if(this.drag){c.fillStyle=col("--accent-soft");const a=Math.min(this.drag.x0,this.drag.x1);c.fillRect(a,this.m.t,Math.abs(this.drag.x1-this.drag.x0),this.ph)}}
+  axes(c,o={}){const xt=o.xt||ticks(this.x0,this.x1,o.nx||6),yt=o.yt||ticks(this.y0,this.y1,o.ny||5);
+    c.save();c.font="12px "+FONT;c.lineWidth=1;
+    c.strokeStyle=col("--grid");c.fillStyle=col("--text-3");c.textAlign="right";c.textBaseline="middle";
+    for(const v of yt){const y=Math.round(this.Y(v))+.5;if(o.grid!==false){c.beginPath();c.moveTo(this.m.l,y);c.lineTo(this.W-this.m.r,y);c.stroke()}c.fillText((o.yf||(v=>fmt(v,0)))(v),this.m.l-8,y)}
+    c.textAlign="center";c.textBaseline="top";
+    for(const v of xt){const x=this.X(v);if(x<this.m.l-1||x>this.W-this.m.r+1)continue;c.fillText((o.xf||(v=>fmt(v,0)))(v),x,this.H-this.m.b+8)}
+    if(o.xgrid){for(const v of xt){const x=Math.round(this.X(v))+.5;c.beginPath();c.moveTo(x,this.m.t);c.lineTo(x,this.H-this.m.b);c.stroke()}}
+    c.fillStyle=col("--text-2");c.textBaseline="alphabetic";
+    if(o.xl){c.textAlign="right";c.fillText(o.xl,this.W-this.m.r,this.H-4)}
+    if(o.yl){c.textAlign="left";c.fillText(o.yl,this.m.l-Math.min(this.m.l-4,44),this.m.t-12)}
+    if(o.y2l){c.textAlign="right";c.fillText(o.y2l,this.W-4,this.m.t-12)}
+    if(o.zero){c.strokeStyle=col("--chart-muted");const y=Math.round(this.Y(0))+.5;c.beginPath();c.moveTo(this.m.l,y);c.lineTo(this.W-this.m.r,y);c.stroke()}
+    c.restore()}
+  clip(c){c.beginPath();c.rect(this.m.l,this.m.t,this.pw,this.ph);c.clip()}
+  line(c,xs,ys,o={}){c.save();if(o.clip!==false)this.clip(c);c.beginPath();let pen=false;
+    let ia=0,ib=xs.length-1;if(o.sorted){ia=Math.max(0,bisect(xs,this.x0)-1);ib=Math.min(xs.length-1,bisect(xs,this.x1)+1)}
+    for(let i=ia;i<=ib;i++){const y=ys[i];if(y==null||!isFinite(y)){pen=false;continue}const px=this.X(xs[i]),py=this.Y(y);pen?c.lineTo(px,py):c.moveTo(px,py);pen=true}
+    if(o.fill){c.lineTo(this.X(xs[ib]),this.Y(o.base??this.y0));c.lineTo(this.X(xs[ia]),this.Y(o.base??this.y0));c.closePath();c.fillStyle=o.fill;c.fill()}
+    if(o.color){c.strokeStyle=o.color;c.lineWidth=o.w||1.5;c.setLineDash(o.dash||[]);c.lineJoin="round";c.stroke()}c.restore()}
+  showTip(px,py,html){this.tip.innerHTML=html;this.tip.classList.add("on");const tw=this.tip.offsetWidth,th=this.tip.offsetHeight;
+    let x=px+14,y=py-th-10;if(x+tw>this.W)x=px-tw-14;if(y<0)y=py+14;if(y+th>this.H)y=this.H-th;this.tip.style.left=x+"px";this.tip.style.top=y+"px"}
+  hideTip(){this.tip.classList.remove("on")}
 }
-function barChart(items, unit){
-  const W=520,rowH=40,L=80,R=150,H=items.length*rowH+20,s=svg(W,H);
-  const vmax=Math.max(...items.map(i=>Math.max(i.value,i.value2||0)))*1.05||1;
-  items.forEach((it,k)=>{const y=10+k*rowH,w=(W-L-R)*it.value/vmax;
-    el(s,"text",{x:L-8,y:y+19,"text-anchor":"end","font-size":13,fill:"#16232E","font-weight":600},it.label);
-    el(s,"rect",{x:L,y:y+6,width:Math.max(w,1),height:20,rx:3,fill:it.color});
-    if(it.value2){const w2=(W-L-R)*it.value2/vmax; el(s,"rect",{x:L,y:y+6,width:w2,height:20,rx:3,fill:"none",stroke:it.color,"stroke-dasharray":"3 2"})}
-    el(s,"text",{x:L+Math.max(w,(it.value2?(W-L-R)*it.value2/vmax:0))+8,y:y+20,"font-size":13,fill:"#3D4A55"},`${fmt(it.value,2)} ${unit}${it.note?"  "+it.note:""}`);
-  });
-  return s;
-}
+function halo(c,t,x,y,o={}){c.save();c.font=(o.bold?"600 ":"")+(o.size||11)+"px "+FONT;c.textAlign=o.align||"center";c.textBaseline=o.base||"middle";
+  c.lineWidth=2.5;c.strokeStyle=o.halo||hexA(col("--halo"),.8);c.lineJoin="round";c.strokeText(t,x,y);c.fillStyle=o.color||col("--text-2");c.fillText(t,x,y);c.restore()}
+function liveDot(c,x,y,color){c.save();c.fillStyle=hexA(color.startsWith("#")?color:"#0071e3",.18);c.beginPath();c.arc(x,y,13,0,7);c.fill();
+  c.fillStyle=color;c.strokeStyle=col("--halo");c.lineWidth=2.5;c.beginPath();c.arc(x,y,6,0,7);c.fill();c.stroke();c.restore()}
 
-/* ---------------- explainer ---------------- */
-function boxes(s, items, y, h=46, gap=18, x0=10, W=740){
-  const n=items.length, w=(W-x0-gap*(n-1))/n;
-  items.forEach((t,i)=>{const x=x0+i*(w+gap);
-    el(s,"rect",{x,y,width:w,height:h,rx:8,fill:t.fill||"#FCFBF8",stroke:t.stroke||"#C9C5B9"});
-    el(s,"text",{x:x+w/2,y:y+h/2-(t.sub?3:-4),"text-anchor":"middle","font-size":13,"font-weight":600,fill:t.color||"#16232E"},t.t);
-    if(t.sub) el(s,"text",{x:x+w/2,y:y+h/2+13,"text-anchor":"middle","font-size":11,fill:"#5C6770"},t.sub);
-    if(i<n-1) el(s,"path",{d:`M${x+w+3},${y+h/2}L${x+w+gap-3},${y+h/2}M${x+w+gap-8},${y+h/2-4}L${x+w+gap-3},${y+h/2}L${x+w+gap-8},${y+h/2+4}`,stroke:"#A8521A","stroke-width":1.6,fill:"none"});
-  });
-}
-const STEPS=[
- {t:"Route",lead:"missions.py turns a road description into 10,000 steps of 10 m.",
-  draw:m=>{const p=m.profile;const g=lineChart(p.s_km,[{y:p.vlim.map(v=>Math.min(v,110)),color:"#9FAFBD",label:"Speed limit incl. curves [km/h]"},{y:p.z,y2:true,area:true,color:"#8f6214",label:"Altitude (relative)"}],{xlabel:"km",ylabel:"km/h",marks:p.stops_km,h:240,y2:true,ymax:115});return g},
-  pts:m=>[`Segments: length, speed limit, surface (asphalt or gravel), hill amplitude.`,`${m.profile.curves} curves: each lowers the limit so that v²/R stays within the side friction drivers accept (Trafikverket).`,`${m.stops} stops (orange ticks) with their waiting time; hills are random but reproducible, start and end at the same altitude.`]},
- {t:"Driver",lead:"A driver model decides the speed actually driven: brake in time, accelerate as far as the driver wants and the engine allows.",
-  draw:m=>{const p=m.profile;return lineChart(p.zoom_s_km,[{y:p.zoom_vlim.map(v=>Math.min(v,110)),color:"#9FAFBD",label:"Limit"},{y:p.zoom_v,color:"#1B6F66",w:2.2,label:"Simulated speed"}],{xlabel:"km (first 3 km)",ylabel:"km/h",h:240,ymax:Math.max(...p.zoom_vlim.map(v=>Math.min(v,110)))*1.1})},
-  pts:()=>["Backward sweep, from the end: v² = v_next² + 2·d·Δs, so every limit and stop is reached with comfortable deceleration d.","Forward sweep, from the start: a = min(driver wish, (P/v − resistances)/m). The cycle is built for the diesel vehicle and used by every powertrain, so all are compared on the same driving.","Time per step = 10 m / mean speed, plus the waiting time at stops."]},
- {t:"Wheel force",lead:"At every step the wheels must deliver the force that keeps the vehicle on the cycle. Same equation for every powertrain, each with its own mass.",
-  draw:()=>{const s=svg(760,250);
-    el(s,"path",{d:"M40,220 L720,150 L720,220 Z",fill:"#ECEAE3"});
-    const g=el(s,"g",{transform:"translate(330,150) rotate(-5.9)"});
-    el(g,"rect",{x:-70,y:-48,width:150,height:48,rx:6,fill:"#16232E"});el(g,"circle",{cx:-40,cy:4,r:12,fill:"#3D4A55"});el(g,"circle",{cx:50,cy:4,r:12,fill:"#3D4A55"});
-    const arr=(x1,y1,x2,y2,c,t,tx,ty)=>{el(s,"line",{x1,y1,x2,y2,stroke:c,"stroke-width":3});const a=Math.atan2(y2-y1,x2-x1);el(s,"path",{d:`M${x2},${y2}L${x2-10*Math.cos(a-0.4)},${y2-10*Math.sin(a-0.4)}L${x2-10*Math.cos(a+0.4)},${y2-10*Math.sin(a+0.4)}Z`,fill:c});el(s,"text",{x:tx,y:ty,"font-size":13,fill:c,"font-weight":600},t)};
-    arr(420,118,560,104,"#1B6F66","Traction F (what the powertrain delivers)",470,92);
-    arr(250,128,150,138,"#2E6DB4","Air ½ρC_dA·v²",90,124);
-    arr(250,150,170,158,"#8A7A36","Rolling c_r·m·g·cosα",60,178);
-    arr(330,130,330,205,"#A8521A","Gravity m·g (slope part m·g·sinα)",340,232);
-    el(s,"text",{x:40,y:30,"font-size":13,fill:"#3D4A55"},"Inertia m_eff·a: extra force to accelerate (or recovered when braking)");
-    return s},
-  pts:()=>["F = m_eff·a + m·g·sinα + c_r·m·g·cosα + ½·ρ·C_dA·v²  (negative F = braking).","The mass penalty enters here: battery and hydrogen tanks add mass, so more force for the same cycle. On the 74 t timber leg the gross mass is fixed and the payload shrinks instead.","Energy of a step = F × 10 m; summing gives traction and braking work."]},
- {t:"Powertrain",lead:"powertrain.py and electric.py follow the force back to the energy source.",
-  draw:()=>{const s=svg(760,300);
-    const row=(y,label,items)=>{el(s,"text",{x:10,y:y-8,"font-size":12,"font-weight":600,fill:"#5C6770"},label);boxes(s,items,y)};
-    row(30,"Diesel · HVO100 · hydrogen engine",[{t:"Wheel",sub:"F, v"},{t:"Axle + I-Shift",sub:"best of 12 gears"},{t:"Engine map",sub:"measured, 44 % peak"},{t:"Fuel",sub:"diesel / HVO / H₂ + pilot",stroke:"#5B6770"}]);
-    row(130,"Battery electric (BEV)",[{t:"Wheel",sub:"F, v"},{t:"Motor + inverter",sub:"losses, regeneration"},{t:"Battery",sub:"loss ∝ P², charge state"},{t:"Grid",sub:"charger 90 %",stroke:"#C0611E"}]);
-    row(230,"Fuel cell electric (FCEV)",[{t:"Wheel",sub:"F, v"},{t:"Motor + inverter",sub:"losses, regeneration"},{t:"Buffer battery",sub:"takes the peaks"},{t:"Fuel cell → H₂",sub:"follows 60 s average",stroke:"#1B8A7A"}]);
-    return s},
-  pts:()=>["Engines: for every gear the engine speed and torque are computed; the feasible gear with the lowest fuel use wins. Stops: the engine idles.","Electric: losses depend on motor torque and speed; when braking, the motor recovers energy down to 7 km/h, within the grip of the driven axle and what the battery accepts. The rest goes to the friction brakes.","Fuel cell: efficiency depends on load; hydrogen is given for a new (BOL) and an aged (EOL) stack."]},
- {t:"Results",lead:"Every quantity is saved every 10 m, then summed per mission and written to Excel with live formulas.",
-  draw:()=>{const s=svg(760,120);boxes(s,[{t:"Cycle CSV",sub:"10 m steps"},{t:"Step results",sub:"one CSV per powertrain"},{t:"Summaries",sub:"JSON per mission"},{t:"5 Excel files",sub:"formulas + notes"},{t:"This page",sub:"charts below",fill:"#E6F0EE",stroke:"#1B6F66"}],36,52);return s},
-  pts:()=>["All inputs and their sources are in vehicles.json (S = sourced, D = derived, A = assumption).","The ▶ Run button above runs the whole chain in about 35 s and refreshes this page."]},
-];
-function renderStepper(){
-  $("stepNav").innerHTML="";STEPS.forEach((st,i)=>{const b=document.createElement("button");b.className=i===STEP?"on":"";b.innerHTML=`<span class="n">${i+1}</span>${st.t}`;b.onclick=()=>{STEP=i;renderStepper()};$("stepNav").appendChild(b)});
-  const st=STEPS[STEP], m=DATA&&DATA.ok?DATA.missions.find(x=>x.tag===MISSION):null, P=$("stepPanel");
-  P.innerHTML=`<h3>${STEP+1}. ${st.t}</h3><p class="lead">${st.lead}</p>`;
-  if(m||STEP>=2){P.appendChild(st.draw(m));const ul=document.createElement("ul");ul.className="pts";st.pts(m).forEach(t=>{const li=document.createElement("li");li.textContent=t;ul.appendChild(li)});P.appendChild(ul)}
-  else P.insertAdjacentHTML("beforeend",`<div class="empty">Run the model to see this step with real data.</div>`);
-  if(m&&STEP<2) P.insertAdjacentHTML("beforeend",`<p class="note">Shown for: ${m.title}. Change mission in the Results tabs.</p>`);
-  const nav=document.createElement("div");nav.className="nav";
-  nav.innerHTML=`<button ${STEP===0?"disabled":""} id="prev">← Previous</button><button ${STEP===STEPS.length-1?"disabled":""} id="next">Next →</button>`;
-  P.appendChild(nav);$("prev").onclick=()=>{STEP--;renderStepper()};$("next").onclick=()=>{STEP++;renderStepper()};
-}
+/* grid rendering + contours */
+function drawGrid(c,ch,grid,xs,ys,ysc,cf,clipFn){const nx=xs.length,ny=ys.length,off=document.createElement("canvas");off.width=nx;off.height=ny;
+  const ic=off.getContext("2d"),img=ic.createImageData(nx,ny);
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const v=grid[j][i],k=((ny-1-j)*nx+i)*4;if(v==null){img.data[k+3]=0;continue}const[r,g,b]=cf(v);img.data[k]=r;img.data[k+1]=g;img.data[k+2]=b;img.data[k+3]=255}
+  ic.putImageData(img,0,0);c.save();ch.clip(c);if(clipFn){clipFn(c);c.clip()}c.imageSmoothingEnabled=true;c.imageSmoothingQuality="high";
+  const dx=(xs[1]-xs[0])/2,dy=(ys[1]-ys[0])/2;const x0=ch.X(xs[0]-dx),x1=ch.X(xs[nx-1]+dx),y0=ch.Y((ys[ny-1]+dy)*ysc),y1=ch.Y((ys[0]-dy)*ysc);
+  c.drawImage(off,x0,y0,x1-x0,y1-y0);c.restore()}
+function fillUp(grid){const g=grid.map(r=>r.slice()),ny=g.length,nx=g[0].length;
+  for(let i=0;i<nx;i++){let last=null;for(let j=0;j<ny;j++){if(g[j][i]!=null)last=g[j][i];else if(last!=null)g[j][i]=last}
+    let first=null;for(let j=0;j<ny;j++)if(g[j][i]!=null){first=g[j][i];break}for(let j=0;j<ny&&g[j][i]==null;j++)g[j][i]=first}return g}
+function contour(grid,xs,ys,L){const segs=[],ny=ys.length,nx=xs.length;
+  for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){const a=grid[j][i],b=grid[j][i+1],cc=grid[j+1][i+1],d=grid[j+1][i];if(a==null||b==null||cc==null||d==null)continue;
+    const code=(a>=L)|((b>=L)<<1)|((cc>=L)<<2)|((d>=L)<<3);if(code===0||code===15)continue;
+    const X0=xs[i],X1=xs[i+1],Y0=ys[j],Y1=ys[j+1];
+    const B=[X0+(L-a)/(b-a)*(X1-X0),Y0],R=[X1,Y0+(L-b)/(cc-b)*(Y1-Y0)],T=[X0+(L-d)/(cc-d)*(X1-X0),Y1],Lf=[X0,Y0+(L-a)/(d-a)*(Y1-Y0)];
+    const add=(p,q)=>segs.push([p,q]);
+    switch(code){case 1:case 14:add(Lf,B);break;case 2:case 13:add(B,R);break;case 3:case 12:add(Lf,R);break;case 4:case 11:add(R,T);break;
+      case 6:case 9:add(B,T);break;case 7:case 8:add(Lf,T);break;case 5:add(Lf,B);add(R,T);break;case 10:add(Lf,T);add(B,R);break}}
+  return segs}
+function drawContours(c,ch,grid,xs,ys,ysc,levels,o){c.save();ch.clip(c);if(o.clipFn){o.clipFn(c);c.clip()}
+  const labels=[];
+  for(const L of levels){const s=contour(grid,xs,ys,L);if(!s.length)continue;c.beginPath();for(const[p,q]of s){c.moveTo(ch.X(p[0]),ch.Y(p[1]*ysc));c.lineTo(ch.X(q[0]),ch.Y(q[1]*ysc))}
+    c.strokeStyle=o.color;c.lineWidth=o.w||1;c.stroke();
+    if(o.anchor){const[ax,ay,dx,dy]=o.anchor(ch);let best=null,bd=1e9;for(const[p,q]of s){const mx=(ch.X(p[0])+ch.X(q[0]))/2,my=(ch.Y(p[1]*ysc)+ch.Y(q[1]*ysc))/2;
+      const vx=mx-ax,vy=my-ay,pr=vx*dx+vy*dy;if(pr<0)continue;const perp=Math.abs(vx*dy-vy*dx);if(perp<bd){bd=perp;best=[mx,my]}}
+      if(best&&bd<40)labels.push([o.fmt(L),best[0],best[1]])}}
+  c.restore();for(const[t,x,y]of labels)halo(c,t,x,y,{color:o.labelColor||col("--text"),bold:true})}
 
-/* ---------------- results ---------------- */
-function renderResults(){
-  if(!DATA||!DATA.ok){$("updated").textContent=DATA?DATA.message:"";$("results").innerHTML="";return}
-  $("updated").textContent=`Results of ${DATA.updated} · engine map: ${DATA.engine_map}`;
-  $("tabs").innerHTML="";DATA.missions.forEach(m=>{const b=document.createElement("button");b.textContent=m.title.replace(/, 100 km.*$/,"").replace("Timber truck, ","Timber · ");b.className=m.tag===MISSION?"on":"";b.onclick=()=>{MISSION=m.tag;renderResults();renderStepper()};$("tabs").appendChild(b)});
-  const m=DATA.missions.find(x=>x.tag===MISSION)||DATA.missions[0], R=$("results");
-  const tp=m.powertrains;
-  R.innerHTML=`<div class="kpis">
-    <div class="kpi"><b>${fmt(m.km,0)} km</b><span>distance</span></div>
-    <div class="kpi"><b>${fmt(m.time_min,0)} min</b><span>time incl. stops</span></div>
-    <div class="kpi"><b>${fmt(m.avg_kmh)} km/h</b><span>mean speed</span></div>
-    <div class="kpi"><b>${m.stops??"–"}</b><span>stops</span></div>
-    <div class="kpi"><b>${m.n_pax!=null?m.n_pax+" pax":fmt(tp[0].payload_t)+" t"}</b><span>${m.n_pax!=null?"passengers (base case)":"timber per round trip (diesel)"}</span></div></div>
-    <div class="grid2"><div class="card"><h3 style="margin:0 0 6px">Energy per km</h3><div id="bars"></div>
-      <p class="note">Tank or battery energy. FCEV bar = mid-life stack, dashed = aged stack. BEV dashed = from the grid incl. charging losses.</p></div>
-    <div class="card"><h3 style="margin:0 0 6px">Consumption and vehicle</h3><div id="tbl"></div></div></div>
-    <div class="card" style="margin-top:14px"><h3 style="margin:0 0 6px">Speed and altitude along the mission</h3><div id="prof"></div></div>`;
-  const items=tp.map(p=>({label:p.name,value:p.kwh_km,color:COL(p.key),
-    value2:p.key==="fcev"?p.range[1]/100*33.333:(p.key==="bev"?p.grid_kwh_km:null),
-    note:p.key==="hvo100"?"(same engine)":""}));
-  $("bars").appendChild(barChart(items,"kWh/km"));
-  const pay=m.tag==="timber_loaded";
-  let t=`<table><tr><th>Powertrain</th><th>Consumption</th><th>Extra mass</th><th>${pay?"Timber/trip":"Mass"}</th><th>Friction brakes</th><th>Deficit</th></tr>`;
-  for(const p of tp) t+=`<tr><td><span class="sw" style="background:${COL(p.key)}"></span>${p.name}</td><td>${fmt(p.value,p.value<20?2:1)} <small>${p.unit.replace(" (battery)","").replace(" (mid-life)","")}</small></td><td>${p.extra?"+"+fmt(p.extra,0)+" kg":"–"}</td><td>${pay?fmt(p.payload_t)+" t":fmt(p.mass/1000)+" t"}</td><td>${fmt(p.friction_kWh,1)} kWh</td><td>${p.deficit??"–"}</td></tr>`;
-  t+=`</table><p class="note">Friction brakes = braking energy not recovered on the mission (total braking at the wheels ≈ ${fmt(m.braking_kWh,0)} kWh). Deficit = 10 m steps where the powertrain could not deliver the cycle's demand.${tp.find(p=>p.key==="fcev").range?` FCEV new / aged: ${fmt(tp[3].range[0],2)} / ${fmt(tp[3].range[1],2)} kg/100 km.`:""}</p>`;
-  $("tbl").innerHTML=t;
-  if(m.profile) $("prof").appendChild(lineChart(m.profile.s_km,[{y:m.profile.vlim.map(v=>Math.min(v,110)),color:"#9FAFBD",label:"Limit"},{y:m.profile.v,color:"#1B6F66",w:1.4,label:"Simulated speed [km/h]"},{y:m.profile.z,y2:true,area:true,color:"#8f6214",label:"Altitude"}],{xlabel:"km",ylabel:"km/h",marks:m.profile.stops_km,y2:true,ymax:115}));
-  // overview
-  let o=`<table><tr><th>Mission</th>${Object.values(PT).map(n=>`<th>${n}</th>`).join("")}</tr>`;
-  for(const mm of DATA.missions){const best=Math.min(...mm.powertrains.map(p=>p.kwh_km));
-    o+=`<tr><td>${mm.title.replace(/, 100 km.*$/,"")}</td>${mm.powertrains.map(p=>`<td style="${p.kwh_km===best?"font-weight:700;color:#1B6F66":""}">${fmt(p.kwh_km,2)}</td>`).join("")}</tr>`}
-  $("overview").innerHTML=o+`</table><p class="note">Bold = lowest energy per km on that mission. Energy per km is not yet energy per passenger-km or per tonne-km: see the functional units in the report.</p>`;
-  $("files").innerHTML="<b>Excel workbooks:</b> "+DATA.excel.map(f=>`<a href="/files/${f}">${f}</a>`).join("");
-  $("figs").innerHTML=DATA.figures.map(f=>`<div class="note">${f}</div><img src="/files/${f}?t=${Date.now()}" alt="${f}">`).join("");
-}
+/* ============================================================ navigation */
+const VIEWS = {};
+function go(v){if(!VIEWS[v])v="overview";S.view=v;$("#missionSeg").style.visibility=(v==="compare"||v==="run")?"hidden":"visible";document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
+  document.querySelectorAll("#tabs a").forEach(a=>a.classList.toggle("on",a.dataset.v===v));
+  const a=document.querySelector(`#tabs a[data-v="${v}"]`);if(a)a.scrollIntoView({block:"nearest",inline:"nearest"});
+  renderView();window.scrollTo({top:0})}
+window.addEventListener("hashchange",()=>go(location.hash.slice(1)));
+function renderView(){const V=VIEWS[S.view];if(!V)return;try{V.render()}catch(e){console.error(e)}document.querySelectorAll(".seg").forEach(moveThumb)}
+function tr(){return S.traces[S.mission]}
+function M(){return S.data&&S.data.ok?S.data.missions.find(m=>m.tag===S.mission)||S.data.missions[0]:null}
+function PT(m,k){return m.powertrains.find(p=>p.key===k)}
+function vehOf(tag){return (S.model&&S.model.missions[tag]||{}).vehicle||(tag.startsWith("timber")?"timber_truck":tag)}
+function stepDt(T){if(T._dt)return T._dt;const n=T.n,dt=new Float64Array(n),dr=new Float64Array(n);
+  for(let i=0;i<n;i++){const d=i<n-1?T.t[i+1]-T.t[i]:0;dt[i]=Math.max(d,0);dr[i]=Math.max(d-T.dwell[i],0)}T._dt=dt;T._dr=dr;return dt}
 
-/* ---------------- run ---------------- */
-const NAMES5=["Driving cycles","Engines","Electric","Engine figure","Excel"];
-function renderProgress(s){
-  const names=s&&s.steps===4?NAMES5.slice(1):NAMES5;
-  $("progress").innerHTML=names.map((n,i)=>{const k=i+1;let c="pill";if(s&&s.running){if(k<s.step)c+=" done";else if(k===s.step)c+=" now"}else if(s&&s.returncode===0)c+=" done";return `<span class="${c}">${k}. ${n}</span>`}).join("")+`<span id="status"></span>`;
-  if(!s)return;
-  if(s.running) $("status").textContent=`Running… ${s.label||""}`;
-  else if(s.returncode===0) $("status").textContent=`Done in ${Math.round(s.finished-s.started)} s`;
-  else if(s.returncode!=null) $("status").textContent="Run failed: see the log";
-}
-async function poll(){
-  const s=await (await fetch("/api/status")).json();
-  renderProgress(s);$("runBtn").disabled=s.running;
-  if(s.log.length){$("log").style.display="block";$("log").textContent=s.log.join("\n");$("log").scrollTop=1e9}
-  if(s.running) setTimeout(poll,700); else if(s.finished){await load()}
-}
-$("runBtn").onclick=async()=>{
-  $("runBtn").disabled=true;
-  await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keep_cycles:$("keep").checked})});
-  poll();
-};
-async function load(){DATA=await (await fetch("/api/data")).json();renderResults();renderStepper()}
-renderProgress(null);load();fetch("/api/status").then(r=>r.json()).then(s=>{if(s.running)poll()});
+/* ============================================================ mission picker & data loading */
+function buildMissionSeg(){const ms=S.data&&S.data.ok?S.data.missions.map(m=>m.tag):Object.keys(MSHORT);if(!ms.includes(S.mission))S.mission=ms[0];
+  seg($("#missionSeg"),ms.map(k=>({k,t:MSHORT[k]||k})),S.mission,k=>setMission(k))}
+async function setMission(k){S.mission=k;store.set("mission",k);S.zoom=null;P.playing=false;updPlayIcon();await loadTrace();P.i=0;P.simT=0;
+  if(S.view==="engine"||S.view==="motor")S.engSrc=S.engSrc;renderView();drawScrub();updateLive()}
+async function loadTrace(force){if(!force&&S.traces[S.mission])return;document.body.classList.add("busy");
+  const t=await api("/api/trace?m="+S.mission);S.traces[S.mission]=t&&t.ok?t:null;document.body.classList.remove("busy")}
+async function loadAll(){
+  const [d,m]=await Promise.all([api("/api/data"),api("/api/model")]);S.data=d;S.model=m&&m.maps?m:null;
+  if(S.model&&!S.engSrc)S.engSrc=S.model.engine_source in S.model.maps?S.model.engine_source:"model";
+  S.traces={};buildMissionSeg();await loadTrace();
+  $("#eyebrow").textContent=d&&d.ok?`TRA545 Hydrogen Technologies · results of ${d.updated} · ${d.engine_map} engine map`:"TRA545 Hydrogen Technologies · no results yet";
+  P.i=Math.min(P.i,(tr()||{n:1}).n-1);renderView();drawScrub();updateLive()}
+
+/* ============================================================ OVERVIEW */
+VIEWS.overview={render(){
+  const m=M(),bars=$("#ovBars");
+  if(!m){bars.innerHTML=`<div class="empty"><b>No results yet</b>Run the model once to fill the dashboard. <a href="#run">Run &amp; inputs</a></div>`;$("#ovKpis").innerHTML="";$("#ovEff").innerHTML="";$("#ovMass").innerHTML="";return}
+  const pts=m.powertrains,max=Math.max(...pts.map(p=>p.key==="fcev"?p.range[1]/100*33.333:p.key==="bev"?p.grid_kwh_km:p.kwh_km))*1.02;
+  const d=PT(m,"diesel"),best=pts.reduce((a,b)=>b.kwh_km<a.kwh_km?b:a);
+  $("#ovTitle").innerHTML=`On the ${MLONG[m.tag]}, ${best.name==="BEV"?"battery-electric":best.name} needs <em>${fmt(d.kwh_km/best.kwh_km,1)}× less energy</em> per km than diesel.`;
+  if(!bars.dataset.built||bars.dataset.built!==String(pts.length)){bars.innerHTML=pts.map(p=>`<div class="hbar" data-k="${p.key}"><div class="nm">${p.name}</div><div class="track"><div class="ext"></div><div class="fill"></div></div><div class="val"><b>–</b><span></span></div></div>`).join("");bars.dataset.built=pts.length}
+  pts.forEach(p=>{const row=bars.querySelector(`[data-k="${p.key}"]`),c=ptCol(p.key);const f=row.querySelector(".fill"),e=row.querySelector(".ext");
+    f.style.background=c;e.style.background=c;const w=p.kwh_km/max*100;requestAnimationFrame(()=>{f.style.width=w+"%";
+      const hi=p.key==="fcev"?p.range[1]/100*33.333:p.key==="bev"?p.grid_kwh_km:null;
+      if(hi){e.style.left=w+"%";e.style.width=Math.max(hi/max*100-w,0)+"%"}else{e.style.left=w+"%";e.style.width="0"}});
+    countUp(row.querySelector(".val b"),p.kwh_km,2);
+    row.querySelector(".val span").textContent=p.key==="fcev"?`${fmt(p.range[0],1)}–${fmt(p.range[1],1)} kg H₂/100 km`:p.key==="bev"?`${fmt(p.value,0)} kWh/100 km`:`${fmt(p.value,1)} ${p.unit}`});
+  $("#ovLegend").innerHTML=`<span>Values in kWh/km.</span><span><i style="background:var(--c-fcev);opacity:.35;height:8px"></i>FCEV: bar = mid-life stack, lighter = aged stack</span><span><i style="background:var(--c-bev);opacity:.35;height:8px"></i>BEV: bar = battery, lighter = from the grid</span>`;
+  const pay=m.n_pax!=null?[m.n_pax,"passengers (base case)",0]:[d.payload_t,"t timber per round trip",1];
+  const k=[[m.km,"km",1],[m.time_min,"min incl. stops",0],[m.avg_kmh,"km/h mean speed",1],[m.stops,"stops",0],[m.climb_m,"m of climbing",0],pay];
+  $("#ovKpis").innerHTML=k.map(x=>`<div><b data-v="0">–</b><span>${x[1]}</span></div>`).join("");
+  $("#ovKpis").querySelectorAll("b").forEach((b,i)=>countUp(b,k[i][0],k[i][2]));
+  const ttw=pts.filter(p=>p.key!=="hvo100");const mx=Math.max(...ttw.map(p=>p.ttw_pct));
+  const bestT=ttw.reduce((a,b)=>b.ttw_pct>a.ttw_pct?b:a),worstT=ttw.reduce((a,b)=>b.ttw_pct<a.ttw_pct?b:a);
+  $("#ovEffTitle").textContent=`${bestT.name} turns ${fmt(bestT.ttw_pct,0)} % of the energy it supplies into traction, ${worstT.name} ${fmt(worstT.ttw_pct,0)} %`;
+  $("#ovEff").innerHTML=ttw.map(p=>`<div class="hbar" style="grid-template-columns:70px minmax(0,1fr) 64px"><div class="nm" style="font-size:14px">${p.name}</div><div class="track" style="height:10px"><div class="fill" data-w="${p.ttw_pct/100*100}" style="background:${ptCol(p.key)};border-radius:5px"></div></div><div class="val"><b style="font-size:17px">${fmt(p.ttw_pct,0)} %</b></div></div>`).join("");
+  requestAnimationFrame(()=>$("#ovEff").querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
+  const pay2=m.tag==="timber_loaded";
+  $("#ovMass").innerHTML=`<tr><th>Powertrain</th><th>Extra mass</th><th>${pay2?"Timber per trip":"Vehicle mass"}</th><th>Friction brakes</th><th>Short of power</th></tr>`+
+    pts.filter(p=>p.key!=="hvo100").map(p=>`<tr><td><span class="sw" style="background:${ptCol(p.key)}"></span>${p.key==="diesel"?"Diesel · HVO100":p.name}</td><td>${p.extra?(p.extra>0?"+":"")+fmt(p.extra,0)+" kg":"–"}</td><td>${pay2?fmt(p.payload_t,1)+" t":fmt(p.mass/1000,1)+" t"}</td><td>${fmt(p.friction_kWh,0)} kWh</td><td>${p.deficit?p.deficit+" steps":"–"}</td></tr>`).join("");
+  $("#ovMassSub").textContent=`Total braking at the wheels on this mission: ${fmt(m.braking_kWh,0)} kWh. Engines lose all of it in the brakes; electric drives recover most of it. "Short of power" counts 10 m steps where the powertrain could not follow the cycle.`;
+}};
+
+/* ============================================================ MISSION */
+let miProf=null,miPow=null;
+function buildTiles(){const fu=S.model?S.model.fuels:null;
+  $("#tiles").innerHTML=[
+    ["diesel","Diesel · HVO100","engine, one map for both"],["h2ice","H2-ICE","engine, H₂ + HVO pilot"],["fcev","FCEV","fuel cell + buffer battery"],["bev","BEV","battery-electric"]
+  ].map(([k,n,s])=>`<div class="tile" id="tile-${k}"><div class="th"><b><span class="sw" style="background:${ptCol(k)}"></span>${n}</b></div><div class="note" style="margin-top:-8px">${s}</div>
+     <div class="big" data-f="big">–</div><div class="pbar"><i data-f="bar" style="background:${ptCol(k)}"></i></div><dl data-f="dl"></dl><div class="cum" data-f="cum">–</div></div>`).join("")}
+function drawSpeedo(){const s=$("#speedo");const R=86,cx=110,cy=112,a0=-210,a1=30;
+  const P2=(a,r)=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];
+  const arc=(r,a,b)=>{const[x0,y0]=P2(a,r),[x1,y1]=P2(b,r);return`M${x0},${y0}A${r},${r} 0 ${b-a>180?1:0} 1 ${x1},${y1}`};
+  let t="";const vmax=S.mission==="coach"||S.mission.startsWith("timber")?120:80;
+  for(let v=0;v<=vmax;v+=10){const a=a0+(a1-a0)*v/vmax,[x0,y0]=P2(a,R-12),[x1,y1]=P2(a,R-(v%20?16:20));t+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--text-3)" stroke-width="${v%20?1:1.5}"/>`;
+    if(v%(vmax>100?20:20)===0){const[lx,ly]=P2(a,R-32);t+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--text-3)">${v}</text>`}}
+  s.innerHTML=`<path d="${arc(R,a0,a1)}" fill="none" stroke="var(--fill)" stroke-width="8" stroke-linecap="round"/>
+   <path id="spArc" d="${arc(R,a0,a1)}" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+   <path id="spLim" d="" fill="none" stroke="var(--text)" stroke-width="3"/>${t}
+   <text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="48" font-weight="600" fill="var(--text)" id="spV" style="font-family:var(--font-display);letter-spacing:-1.5px;font-variant-numeric:tabular-nums">0</text>
+   <text x="${cx}" y="${cy+26}" text-anchor="middle" font-size="12" fill="var(--text-2)">km/h</text>
+   <text x="${cx}" y="${cy+56}" text-anchor="middle" font-size="12" fill="var(--text-3)" id="spLimT">limit –</text>`;
+  s._g={vmax,a0,a1,R,P2}}
+function updSpeedo(v,lim){const s=$("#speedo");if(!s._g)return;const{vmax,a0,a1,R,P2}=s._g;$("#spArc").setAttribute("stroke-dasharray",`${clamp(v/vmax,0,1)*100} 100`);
+  $("#spV").textContent=Math.round(v);const a=a0+(a1-a0)*clamp(lim/vmax,0,1),[x0,y0]=P2(a,R-6),[x1,y1]=P2(a,R+6);$("#spLim").setAttribute("d",`M${x0},${y0}L${x1},${y1}`);
+  $("#spLimT").textContent=lim>0?`limit ${Math.round(lim)} km/h`:"stop"}
+VIEWS.mission={render(){
+  const m=M(),T=tr();
+  if(!m||!T){$("#miTitle").textContent="Mission";$("#miLede").textContent="Run the model to see the mission.";return}
+  $("#miTitle").innerHTML=`${MSHORT[m.tag]}: ${fmt(m.km,1)} km in ${fmt(m.time_min,0)} minutes, <em>${m.stops} stops, ${fmt(m.avg_kmh,0)} km/h on average.</em>`;
+  $("#miLede").textContent=`${m.title} (${m.cycle_source||"synthetic route"}). ${m.standstill_pct!=null?fmt(m.standstill_pct,0)+" % of the time standing still, ":""}${fmt(m.climb_m,0)} m of climbing, steepest grade ${fmt(m.max_grade,1)} %. Press play below to drive it: every instrument follows the replay.`;
+  buildTiles();drawSpeedo();
+  miProf=new Chart("#miProfile",{h:300,m:{l:44,r:48,t:28,b:34}});
+  miPow=new Chart("#miPower",{h:150,m:{l:44,r:48,t:22,b:30}});
+  const zmax=Math.max(...T.z),zmin=Math.min(...T.z),vmax=Math.ceil(Math.max(...T.vlim.map(v=>Math.min(v,120)),...T.v)/10)*10+5;
+  const L0=T.s[T.n-1];if(S.follow==null)S.follow=m.stops/m.km>1;const win=m.stops/m.km>1?2:8;
+  const setX=()=>{let a,b;if(S.follow){a=clamp(T.s[P.i]-win/2,0,Math.max(0,L0-win));b=Math.min(L0,a+win)}else[a,b]=S.zoom||[0,L0];for(const ch of[miProf,miPow]){ch.x0=a;ch.x1=b}};this._setX=setX;
+  setX();miProf.y0=0;miProf.y1=vmax;
+  const pmax=Math.max(...T.P_wheel),pmin=Math.min(...T.P_wheel);miPow.y0=Math.floor(pmin/50)*50;miPow.y1=Math.ceil(pmax/50)*50;
+  const stops=T.s.filter((_,i)=>T.dwell[i]>0);
+  miProf.draw=(c,ch)=>{ch.axes(c,{yl:"km/h",xl:"km",y2l:"altitude, m",xf:v=>fmt(v,ch.x1-ch.x0<5?1:0)});
+    const zr=(zmax-zmin)||1,zY=z=>ch.y0+(z-zmin)/zr*(ch.y1-ch.y0)*0.45;
+    c.save();ch.clip(c);ch.line(c,T.s,T.z.map(zY),{sorted:true,fill:hexA(col("--chart-context").startsWith("#")?col("--chart-context"):"#c7c7cc",.45)});c.restore();
+    c.save();c.fillStyle=col("--text-3");c.textAlign="left";c.textBaseline="middle";for(const z of ticks(zmin,zmax,3)){c.fillText(fmt(z,0),ch.W-ch.m.r+8,ch.Y(zY(z)))}c.restore();
+    ch.line(c,T.s,T.vlim.map(v=>Math.min(v,vmax)),{color:col("--chart-context"),w:1.5,sorted:true});
+    ch.line(c,T.s,T.v,{color:col("--text"),w:1.6,sorted:true});
+    c.save();ch.clip(c);c.fillStyle=ptCol("bev");for(const s of stops){const x=ch.X(s);if(x<ch.m.l||x>ch.W-ch.m.r)continue;c.beginPath();c.arc(x,ch.Y(0)-3,2.5,0,7);c.fill()}c.restore()};
+  miPow.draw=(c,ch)=>{ch.axes(c,{yl:"kW",ny:4,zero:true,xf:v=>fmt(v,ch.x1-ch.x0<5?1:0)});
+    c.save();ch.clip(c);const y0=ch.Y(0),ia=Math.max(0,bisect(T.s,ch.x0)-1),ib=Math.min(T.n-1,bisect(T.s,ch.x1)+1);c.beginPath();c.moveTo(ch.X(T.s[ia]),y0);for(let i=ia;i<=ib;i++)c.lineTo(ch.X(T.s[i]),ch.Y(T.P_wheel[i]));c.lineTo(ch.X(T.s[ib]),y0);c.closePath();
+    c.fillStyle=hexA(col("--text").startsWith("#")?col("--text"):"#1d1d1f",.08);c.fill();c.restore();ch.line(c,T.s,T.P_wheel,{color:col("--text"),w:1,sorted:true})};
+  const over=(c,ch,withTip)=>{const i=P.i,x=ch.X(T.s[i]);if(x>=ch.m.l&&x<=ch.W-ch.m.r){c.strokeStyle=col("--accent");c.lineWidth=1.5;c.beginPath();c.moveTo(x,ch.m.t);c.lineTo(x,ch.H-ch.m.b);c.stroke();
+      if(ch===miProf)liveDot(c,x,ch.Y(T.v[i]),col("--accent"));else liveDot(c,x,ch.Y(T.P_wheel[i]),col("--accent"))}
+    if(ch.mx!=null&&ch.inside(ch.mx,ch.my)){const s=ch.ix(ch.mx),j=bisect(T.s,s),hx=ch.X(T.s[j]);c.strokeStyle=col("--chart-muted");c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.moveTo(hx,ch.m.t);c.lineTo(hx,ch.H-ch.m.b);c.stroke();c.setLineDash([]);
+      ch.showTip(hx,ch.my,`<b>km ${fmt(T.s[j],2)}</b> · ${fmtT(T.t[j])}<br><span class="k">speed</span> ${fmt(T.v[j],0)} km/h <span class="k">limit</span> ${fmt(T.vlim[j],0)}<br><span class="k">grade</span> ${fmt(T.grade[j],1)} % <span class="k">altitude</span> ${fmt(T.z[j],0)} m<br><span class="k">wheel power</span> ${fmt(T.P_wheel[j],0)} kW${T.dwell[j]>0?`<br><span class="k">stop</span> ${fmt(T.dwell[j],0)} s`:""}`)}};
+  miProf.over=(c,ch)=>over(c,ch);miPow.over=(c,ch)=>over(c,ch);
+  const redrawBoth=()=>{setX();miProf.redraw();miPow.redraw()};
+  const mode=seg($("#miMode"),[{k:"whole",t:"Whole mission"},{k:"follow",t:`Follow replay (${win} km)`}],S.follow?"follow":"whole",v=>{S.follow=v==="follow";S.zoom=null;redrawBoth()});
+  for(const ch of[miProf,miPow]){ch.onbrush=(a,b)=>{S.follow=false;mode("whole");S.zoom=[Math.max(0,a),Math.min(L0,b)];redrawBoth()};
+    ch.onclick=x=>{if(!ch.inside(x,ch.m.t+1))return;seekIndex(bisect(T.s,ch.ix(x)))};ch.ondbl=()=>{S.follow=false;mode("whole");S.zoom=null;redrawBoth()}}
+  this.tick()},
+ tick(){const T=tr();if(!T||!$("#tiles").children.length)return;const i=P.i;
+  updSpeedo(T.v[i],T.vlim[i]);$("#lvGrade").textContent=(T.grade[i]>0?"+":"")+fmt(T.grade[i],1)+" %";$("#lvAlt").textContent=fmt(T.z[i],0)+" m";$("#lvPw").textContent=fmt(T.P_wheel[i],0)+" kW";
+  const fu=S.model?S.model.fuels:{diesel:{LHV_MJ_per_kg:42.7,density_kg_per_l:.835},hvo100:{LHV_MJ_per_kg:44,density_kg_per_l:.78}};
+  const hvoL=T.d_cum_l[i]*fu.diesel.density_kg_per_l*fu.diesel.LHV_MJ_per_kg/fu.hvo100.LHV_MJ_per_kg/fu.hvo100.density_kg_per_l;
+  const veh=S.model?S.model.edrive.vehicles[vehOf(S.mission)]:null,eng=S.model?S.model.engines[vehOf(S.mission)]:null;
+  const bar=(el,p,pmax)=>{const f=clamp(p/pmax,-1,1),o=el.querySelector('[data-f="bar"]');const z=25;if(f>=0){o.style.left=z+"%";o.style.width=f*(100-z)+"%"}else{o.style.left=(z+f*z)+"%";o.style.width=-f*z+"%"}};
+  const set=(k,big,dl,cum,p,pmax)=>{const el=$("#tile-"+k);if(!el)return;el.querySelector('[data-f="big"]').innerHTML=big;el.querySelector('[data-f="dl"]').innerHTML=dl.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("");el.querySelector('[data-f="cum"]').innerHTML=cum;bar(el,p,pmax)};
+  const idle=T.d_gear[i]===0&&T.v[i]<0.5;
+  set("diesel",`${fmt(T.d_P[i],0)}<small>kW</small>`,[["gear",idle?"idle":T.d_gear[i]||"–"],["speed",fmt(T.d_n[i],0)+" rpm"],["torque",fmt(T.d_T[i],0)+" Nm"],["efficiency",T.d_eta[i]>0?fmt(T.d_eta[i]*100,1)+" %":"–"]],
+    `<b>${fmt(T.d_cum_l[i],2)} l</b> diesel · <b>${fmt(hvoL,2)} l</b> HVO100`,T.d_P[i],eng?eng.rated_kW:400);
+  if(T.h_n)set("h2ice",`${fmt(T.h_P[i],0)}<small>kW</small>`,[["gear",T.h_gear[i]===0&&T.v[i]<.5?"idle":T.h_gear[i]||"–"],["speed",fmt(T.h_n[i],0)+" rpm"],["torque",fmt(T.h_T[i],0)+" Nm"],["mass",PT(M(),"h2ice")?"+"+fmt(PT(M(),"h2ice").extra,0)+" kg":"–"]],
+    `<b>${fmt(T.h_cum[i],3)} kg</b> hydrogen`,T.h_P[i],eng?eng.rated_kW:400);
+  set("fcev",`${fmt(T.f_Pm[i],0)}<small>kW motor</small>`,[["fuel cell",fmt(T.f_Pfc[i],0)+" kW · "+fmt(T.f_load[i]*100,0)+" %"],["battery",fmt(T.f_Pb[i],0)+" kW"],["charge",fmt(T.f_soc[i]*100,1)+" %"],["mode",T.f_Pm[i]<0?"regenerating":T.f_Pm[i]>0?"driving":"standing"]],
+    `<b>${fmt(T.f_cum[i],3)} kg</b> hydrogen (new stack)`,T.f_Pm[i],veh?veh.pmax:300);
+  set("bev",`${fmt(T.b_Pm[i],0)}<small>kW motor</small>`,[["battery",fmt(T.b_Pb[i],0)+" kW"],["charge",fmt(T.b_soc[i]*100,1)+" %"],["C-rate",veh?fmt(T.b_Pb[i]/veh.bev.battery_kWh,2)+" C":"–"],["mode",T.b_Pm[i]<0?"regenerating":T.b_Pm[i]>0?"driving":"standing"]],
+    `<b>${fmt(T.b_cum[i],2)} kWh</b> from the battery`,T.b_Pm[i],veh?veh.pmax:300);
+  if(miProf){if(S.follow&&this._setX){const a=miProf.x0;this._setX();if(miProf.x0!==a){miProf.redraw();miPow.redraw();return}}miProf.redrawOver();miPow.redrawOver()}}};
+
+/* ============================================================ ENGINE */
+let enCh=null;
+function engGrid(){const md=S.model;const src=md.maps[S.engSrc]?S.engSrc:"model";return{src,map:md.maps[src]}}
+function engLookup(map,layer,n,Tref){const md=S.model,ns=md.ns,Ts=md.Ts,g=map[layer];if(!g)return null;if(n<ns[0]||n>ns[ns.length-1]||Tref<Ts[0]||Tref>Ts[Ts.length-1])return null;
+  const i=Math.min(ns.length-2,Math.floor((n-ns[0])/(ns[1]-ns[0]))),j=Math.min(Ts.length-2,Math.floor((Tref-Ts[0])/(Ts[1]-Ts[0])));
+  const fx=(n-ns[i])/(ns[1]-ns[0]),fy=(Tref-Ts[j])/(Ts[1]-Ts[0]);const a=g[j][i],b=g[j][i+1],c=g[j+1][i+1],d=g[j+1][i];if([a,b,c,d].some(v=>v==null))return null;
+  return a*(1-fx)*(1-fy)+b*fx*(1-fy)+c*fx*fy+d*(1-fx)*fy}
+const LAYERS={eta:{t:"Efficiency",ramp:"cool",lo:.2,hi:.46,f:v=>fmt(v*100,0)+" %",lv:[.25,.3,.34,.37,.4,.42,.43,.44,.46,.48,.49]},
+              bsfc:{t:"BSFC",ramp:"cool",lo:420,hi:185,f:v=>fmt(v,0),lv:[190,195,200,205,210,220,235,260,300]},
+              nox:{t:"NOx engine-out",ramp:"warm",lo:6,hi:30,f:v=>fmt(v,0),lv:[8,10,12,15,20,25]}};
+VIEWS.engine={render(){
+  const md=S.model,m=M(),T=tr();if(!md){$("#enTitle").textContent="Engine map";return}
+  const veh=vehOf(S.mission),eng=md.engines[veh],k=eng.k;
+  seg($("#enSrc"),[{k:"measured",t:"Measured",disabled:!md.maps.measured},{k:"model",t:"Semi-empirical"}],S.engSrc,v=>{S.engSrc=v;if(v!=="measured"&&S.engLayer==="nox")S.engLayer="eta";this.render()});
+  seg($("#enLayer"),[{k:"eta",t:"Efficiency"},{k:"bsfc",t:"BSFC"},{k:"nox",t:"NOx",disabled:S.engSrc!=="measured"}],S.engLayer,v=>{S.engLayer=v;this.render()});
+  seg($("#enPt"),[{k:"diesel",t:"Diesel"},{k:"h2ice",t:"H2-ICE"}],S.engPt,v=>{S.engPt=v;this.render()});
+  const{src,map}=engGrid(),used=md.engine_source;const L=Object.assign({},LAYERS[S.engLayer]);
+  if(S.engLayer==="eta"){L.lo=.25;L.hi=map.best.eta}else if(S.engLayer==="bsfc"){L.lo=3600/(.25*42.7);L.hi=3600/(map.best.eta*42.7)}
+  const p=m?PT(m,"diesel"):null;
+  $("#enTitle").innerHTML=p?`The ${VNAME[veh]} engine averages ${fmt(p.eff_pct,1)} % on this mission, <em>against a best point of ${fmt(map.best.eta*100,1)} %.</em>`:"Engine map";
+  // operating points
+  const ops=[];let idleT=0;const dt=T?stepDt(T):null;
+  if(T){const g=S.engPt==="h2ice"&&T.h_n?["h_n","h_T","h_gear"]:["d_n","d_T","d_gear"];for(let i=0;i<T.n;i++){if(T[g[2]][i]>0&&T[g[1]][i]>0)ops.push([T[g[0]][i],T[g[1]][i]]);idleT+=T.dwell[i]}}
+  const Tmax=Math.max(...md.fl_ref)*k*1.06;
+  enCh=new Chart("#enChart",{h:440,m:{l:56,r:20,t:28,b:36}});enCh.x0=550;enCh.x1=1950;enCh.y0=0;enCh.y1=Tmax;
+  const gam=S.engLayer==="nox"?1:2,cf=(()=>{const r=ramp(L.ramp);return v=>r(Math.pow(clamp((v-L.lo)/(L.hi-L.lo),0,1),gam))})();
+  const flPath=c=>{c.beginPath();c.moveTo(enCh.X(md.ns[0]),enCh.Y(0));md.ns.forEach((n,i)=>c.lineTo(enCh.X(n),enCh.Y(md.fl_ref[i]*k)));c.lineTo(enCh.X(md.ns[md.ns.length-1]),enCh.Y(0));c.closePath()};
+  const grid=S.engLayer==="nox"?map.nox:fillUp(map[S.engLayer]);
+  const lv=L.lv.filter(v=>S.engLayer!=="eta"||v<=map.best.eta);
+  const bestX=()=>[enCh.X(map.best.n),enCh.Y(map.best.T*k)];
+  enCh.draw=(c,ch)=>{ch.axes(c,{yl:"torque, Nm",xl:"engine speed, rpm"});
+    drawGrid(c,ch,grid,md.ns,md.Ts,k,cf,flPath);
+    drawContours(c,ch,map[S.engLayer],md.ns,md.Ts,k,lv,{color:hexA(isDark()?"#ffffff":"#1d1d1f",.28),w:1,clipFn:flPath,fmt:v=>S.engLayer==="eta"?fmt(v*100,0):fmt(v,0),
+      anchor:ch2=>{const[bx,by]=bestX();return[bx,by,.6,.8]}});
+    if($("#enShowPow").checked){c.save();ch.clip(c);flPath(c);c.clip();c.setLineDash([2,4]);c.strokeStyle=col("--chart-muted");c.lineWidth=1;
+      for(let P0=50;P0<=eng.rated_kW*1.05;P0+=50){c.beginPath();let pen=false;for(let n=600;n<=1900;n+=10){const Tq=P0*1000*60/(2*Math.PI*n);const px=ch.X(n),py=ch.Y(Tq);pen?c.lineTo(px,py):c.moveTo(px,py);pen=true}c.stroke()}
+      c.restore();c.setLineDash([]);for(let P0=50;P0<=eng.rated_kW*1.05;P0+=P0>=200?100:50){const n=1880,Tq=P0*1000*60/(2*Math.PI*n);if(Tq<lerp(md.ns,md.fl_ref,n)*k-40)halo(c,P0+" kW",ch.X(n)-4,ch.Y(Tq)-8,{align:"right",size:10})}}
+    // full load + measured envelope
+    ch.line(c,md.ns,md.fl_ref.map(v=>v*k),{color:col("--text"),w:2});
+    if(src==="measured"&&map.t_measured_max){ch.line(c,md.ns,map.t_measured_max.map(v=>v*k),{color:col("--text-2"),w:1.2,dash:[5,4]});}
+    halo(c,"full load",ch.X(1700),ch.Y(lerp(md.ns,md.fl_ref,1700)*k)-10,{color:col("--text"),bold:true});
+    if($("#enShowMeas").checked&&map.points){c.save();c.strokeStyle=col("--text");c.lineWidth=1;for(const[n,Tq]of map.points){c.beginPath();c.arc(ch.X(n),ch.Y(Tq*k),2.5,0,7);c.stroke()}c.restore()}
+    if($("#enShowOps").checked&&ops.length){c.save();ch.clip(c);c.fillStyle=hexA(col("--text"),.28);for(const[n,Tq]of ops){c.fillRect(ch.X(n)-1.5,ch.Y(Tq)-1.5,3,3)}c.restore();
+      if(idleT>0){const x=ch.X(eng.n_idle),y=ch.Y(eng.aux_kW*1000/(2*Math.PI*eng.n_idle/60));c.save();c.fillStyle=ptCol(S.engPt);c.strokeStyle=col("--halo");c.lineWidth=2;c.beginPath();c.moveTo(x,y-7);c.lineTo(x+7,y);c.lineTo(x,y+7);c.lineTo(x-7,y);c.closePath();c.fill();c.stroke();c.restore();
+        halo(c,`idle ${fmt(idleT/((T.t[T.n-1]||1))*100,0)} % of time`,x+12,y-10,{align:"left",size:11})}}
+    const[bx,by]=bestX();c.save();c.strokeStyle=col("--text");c.lineWidth=1.5;c.beginPath();c.moveTo(bx-5,by-5);c.lineTo(bx+5,by+5);c.moveTo(bx+5,by-5);c.lineTo(bx-5,by+5);c.stroke();c.restore();
+    halo(c,`best ${fmt(map.best.eta*100,1)} %`,bx+8,by-10,{align:"left",bold:true,color:col("--text")})};
+  enCh.over=(c,ch)=>{if(T){const i=P.i,gk=S.engPt==="h2ice"&&T.h_n?"h_":"d_";const dt0=T.t[i];
+      c.save();for(let j=i;j>=0&&dt0-T.t[j]<30;j--){if(T[gk+"gear"][j]>0&&T[gk+"T"][j]>0){const a=1-(dt0-T.t[j])/30;c.fillStyle=hexA(col("--accent"),.5*a);c.beginPath();c.arc(ch.X(T[gk+"n"][j]),ch.Y(T[gk+"T"][j]),3,0,7);c.fill()}}c.restore();
+      const g=T[gk+"gear"][i],n=g>0?T[gk+"n"][i]:eng.n_idle,Tq=g>0?Math.max(T[gk+"T"][i],0):(T.v[i]<.5?eng.aux_kW*1000/(2*Math.PI*eng.n_idle/60):0);
+      if(g>0||T.v[i]<.5)liveDot(c,ch.X(n),ch.Y(Tq),col("--accent"))}
+    if(ch.mx!=null&&ch.inside(ch.mx,ch.my)){const n=ch.ix(ch.mx),Tq=ch.iy(ch.my),fl=lerp(md.ns,md.fl_ref,n)*k;
+      if(Tq>fl||Tq<0){ch.showTip(ch.mx,ch.my,`<b>${fmt(n,0)} rpm · ${fmt(Tq,0)} Nm</b><br><span class="k">above full load</span>`);return}
+      const e=engLookup(map,"eta",n,Tq/k),b=engLookup(map,"bsfc",n,Tq/k),x=src==="measured"?engLookup(map,"nox",n,Tq/k):null,Pk=Tq*2*Math.PI*n/60/1000;
+      ch.showTip(ch.mx,ch.my,`<b>${fmt(n,0)} rpm · ${fmt(Tq,0)} Nm · ${fmt(Pk,0)} kW</b><br><span class="k">efficiency</span> ${e?fmt(e*100,1)+" %":"–"}<br><span class="k">BSFC</span> ${b?fmt(b,0)+" g/kWh":"–"}${src==="measured"?`<br><span class="k">NOx engine-out</span> ${x?fmt(x,1)+" g/kWh":"outside the test points"}`:""}<br><span class="k">fuel</span> ${e?fmt(Pk/e,0)+" kW":"–"}`)}};
+  // colour bar & legend
+  const cb=$("#enCb"),r=ramp(L.ramp);drawCbar(cb,t=>r(Math.pow(t,gam)));
+  $("#enCbLo").textContent=S.engLayer==="eta"?fmt(L.lo*100,0)+" %":fmt(L.lo,0);$("#enCbHi").textContent=(S.engLayer==="eta"?fmt(L.hi*100,0)+" %":fmt(L.hi,0))+(S.engLayer==="bsfc"?" g/kWh":S.engLayer==="nox"?" g/kWh":"");
+  $("#enLegend").innerHTML=`<span><i style="background:var(--text);height:2px"></i>Full load</span>${src==="measured"?`<span><i class="dash" style="color:var(--text-2)"></i>Highest measured torque</span>`:""}<span><i class="dot" style="background:var(--text);opacity:.5"></i>${PTNAME[S.engPt]} operating points</span><span><i class="dot" style="background:var(--accent)"></i>Now</span>`;
+  ["enShowOps","enShowMeas","enShowPow"].forEach(id=>$("#"+id).onchange=()=>enCh.redraw());
+  $("#enShowMeas").disabled=src!=="measured";
+  // stats
+  const dd=m?PT(m,S.engPt==="h2ice"?"h2ice":"diesel"):null;
+  const stats=[[p?fmt(p.eff_pct,1)+" %":"–","mean engine efficiency (incl. idle)"],[dd?fmt(dd.ttw_pct,1)+" %":"–","tank-to-wheel"],
+    [m?fmt(m.idle_fuel_pct,1)+" %":"–","of the fuel burnt at idle"],[m?fmt(m.shifts,0):"–","gear shifts"],
+    [S.engPt==="h2ice"&&dd?fmt(dd.pilot_pct,1)+" %":(m&&m.extrap_pct!=null?fmt(m.extrap_pct,1)+" %":"–"),S.engPt==="h2ice"?"HVO pilot share of fuel energy":"fuel above highest measured torque"],
+    [fmt(eng.rated_kW,0)+" kW",`${fmt(eng.displacement_l,1)} l engine${veh==="timber_truck"?", reference size":", map scaled by displacement"}`]];
+  $("#enStats").innerHTML=stats.map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
+  // gears
+  const gt=new Array(13).fill(0);if(T){const dr=T._dr;const gk=S.engPt==="h2ice"&&T.h_gear?"h_gear":"d_gear";for(let i=0;i<T.n;i++){if(T[gk][i]>0)gt[T[gk][i]]+=dr[i];gt[0]+=T.dwell[i]}}
+  const gmax=Math.max(...gt,1);$("#enGears").innerHTML=gt.map((v,g)=>`<div data-g="${g}" title="${g?("gear "+g):"idle"}: ${fmt(v/60,1)} min" style="height:0"></div>`).join("");
+  $("#enGearLbl").innerHTML=gt.map((_,g)=>`<span>${g||"idle"}</span>`).join("");
+  requestAnimationFrame(()=>$("#enGears").querySelectorAll("div").forEach((d,g)=>d.style.height=Math.max(gt[g]/gmax*100,1)+"%"));
+  $("#enHow").innerHTML=`<p><b>Colour</b> is the ${S.engLayer==="eta"?"brake efficiency: the share of the fuel energy that leaves the crankshaft as work":S.engLayer==="bsfc"?"brake-specific fuel consumption, grams of diesel per kWh of work (lower is better)":"engine-out NOx per kWh of work, measured on the test bench before the SCR catalyst. The tailpipe value is much lower"}. Lines join points of equal value. The best region is at low speed and high torque: friction is a smaller share of the work there.</p>
+   <p><b>Dots</b> are the operating points of every 10 m step of the ${MLONG[S.mission]}. Steady cruising sits on a vertical band because, with the clutch closed, engine speed is fixed by vehicle speed and gear (n = v·i_gear·i_axle / 2πr); torque then follows the grade. Steps where the vehicle drags the engine (fuel cut-off) are not drawn.</p>
+   <p><b>${src==="measured"?"Measured map":"Semi-empirical map"}.</b> ${src==="measured"?"176 steady-state test-bench points of a 13 L heavy-duty diesel engine provided by AB Volvo for the course, interpolated linearly in torque and speed. Above the dashed line the fuel is extrapolated.":"Friction model plus an assumed indicated-efficiency shape, scaled to a 50 % peak (assumption). Use it with the measured map as a range."} ${veh!=="timber_truck"?`The ${VNAME[veh]} engine (${fmt(eng.displacement_l,1)} l) uses the same map at equal mean effective pressure, so torque is scaled by ${fmt(k,2)}.`:""} HVO100 and the hydrogen engine use this same map (equal efficiency, an assumption for hydrogen). ${used!==src?`<br><b>Note:</b> the results were computed with the ${used} map; this view shows the ${src} map for comparison.`:""}</p>`;
+  this.tick()},
+ tick(){if(enCh)enCh.redrawOver();const T=tr();if(!T)return;const gk=S.engPt==="h2ice"&&T.h_gear?"h_":"d_",g=T[gk+"gear"][P.i];
+  $("#enGears").querySelectorAll("div").forEach((d,k)=>d.classList.toggle("cur",k===(g>0?g:(T.v[P.i]<.5?0:-1))));
+  $("#enLive").innerHTML=`Now: ${g>0?`gear ${g}, <b>${fmt(T[gk+"n"][P.i],0)} rpm</b>, <b>${fmt(T[gk+"T"][P.i],0)} Nm</b>`+(gk==="d_"&&T.d_eta[P.i]>0?`, efficiency <b>${fmt(T.d_eta[P.i]*100,1)} %</b>`:""):T.v[P.i]<.5?"engine idling at a stop":"overrun, fuel cut off"}.`}};
+
+/* ============================================================ MOTOR */
+let moCh=null;
+function motorLoss(t,w){const e=S.model.edrive,sh=e.shape,iv=e.inverter,a=Math.abs(t),sc=e.scale;
+  return{cu:sc*sh.k_cu*t*t,fe:sc*sh.k_fe*Math.pow(w,1.5),fw:sc*sh.k_fw*w*w*w,c0:sc*sh.c0,inv:iv.a0+iv.a1*a+iv.a2*t*t}}
+function motorEta(t,w){const L=motorLoss(t,w),l=L.cu+L.fe+L.fw+L.c0+L.inv,pm=Math.abs(t)*w;if(pm<=1e-6)return 0;return t>=0?pm/(pm+l):Math.max(0,(pm-l)/pm)}
+VIEWS.motor={render(){
+  const md=S.model,m=M(),T=tr();if(!md){return}
+  const veh=vehOf(S.mission),ve=md.edrive.vehicles[veh],cp=md.edrive.cpsr;
+  seg($("#moPt"),[{k:"bev",t:"BEV"},{k:"fcev",t:"FCEV"}],S.motorPt,v=>{S.motorPt=v;this.render()});
+  const pre=S.motorPt==="bev"?"b_":"f_";
+  // energy-weighted stats
+  let eIn=0,eOut=0,eHi=0,eReg=0,eRegIn=0;if(T){const dr=stepDt(T)&&T._dr;for(let i=0;i<T.n;i++){const t=T[pre+"t"][i],w=T[pre+"w"][i],h=dr[i]/3600;if(!h||!t)continue;const L=motorLoss(t,w),l=(L.cu+L.fe+L.fw+L.c0+L.inv)*ve.pmax,pm=Math.abs(t)*w*ve.pmax;
+    if(t>0){eIn+=(pm+l)*h;eOut+=pm*h;if(pm/(pm+l)>=.9)eHi+=(pm+l)*h}else{eReg+=pm*h;eRegIn+=Math.max(pm-l,0)*h}}}
+  const share=eIn?eHi/eIn*100:null,meanEta=eIn?eOut/eIn*100:null;
+  $("#moTitle").innerHTML=share!=null?`${fmt(share,0)} % of the ${S.motorPt==="bev"?"BEV":"FCEV"} motor's energy is used above 90 % efficiency, <em>${fmt(meanEta,1)} % on average.</em>`:"Electric motor";
+  moCh=new Chart("#moChart",{h:440,m:{l:56,r:20,t:28,b:36}});moCh.x0=0;moCh.x1=cp;moCh.y0=-1.05;moCh.y1=1.05;
+  const nx=121,ny=121,ws=[...Array(nx)].map((_,i)=>i/(nx-1)*cp),ts=[...Array(ny)].map((_,j)=>-1+2*j/(ny-1));
+  const grid=ts.map(t=>ws.map(w=>Math.abs(t)<=Math.min(1,1/Math.max(w,1e-6))+1e-9&&w>0?motorEta(t,w):null));
+  const r=ramp("cool"),cf=v=>r(Math.pow(clamp((v-.7)/(.97-.7),0,1),1.6));
+  const env=c=>{c.beginPath();c.moveTo(moCh.X(0),moCh.Y(0));for(let i=0;i<=200;i++){const w=i/200*cp;c.lineTo(moCh.X(w),moCh.Y(Math.min(1,1/Math.max(w,1e-6))))}
+    for(let i=200;i>=0;i--){const w=i/200*cp;c.lineTo(moCh.X(w),moCh.Y(-Math.min(1,1/Math.max(w,1e-6))))}c.closePath()};
+  const ops=[];if(T)for(let i=0;i<T.n;i++){const t=T[pre+"t"][i];if(t)ops.push([T[pre+"w"][i],t])}
+  moCh.draw=(c,ch)=>{ch.axes(c,{yl:"torque, % of peak",xl:"motor speed ÷ base speed",yf:v=>fmt(v*100,0),xf:v=>fmt(v,1),yt:[-1,-.5,0,.5,1],xt:ticks(0,cp,6)});
+    drawGrid(c,ch,fillUp(grid),ws,ts,1,cf,env);
+    drawContours(c,ch,grid,ws,ts,1,[.8,.85,.9,.93,.95,.96],{color:hexA(isDark()?"#ffffff":"#1d1d1f",.3),clipFn:env,fmt:v=>fmt(v*100,0),anchor:ch2=>[ch2.X(0),ch2.Y(.78),1,0]});
+    c.save();env(c);c.strokeStyle=col("--text");c.lineWidth=2;c.stroke();c.restore();
+    c.save();c.strokeStyle=col("--chart-muted");c.beginPath();c.moveTo(ch.X(0),ch.Y(0)+.5);c.lineTo(ch.X(cp),ch.Y(0)+.5);c.stroke();c.restore();
+    halo(c,"motoring",ch.X(cp)-6,ch.Y(.12),{align:"right",bold:true,color:col("--text")});halo(c,"generating (regenerative braking)",ch.X(cp)-6,ch.Y(-.12),{align:"right",bold:true,color:col("--text")});
+    halo(c,"constant torque",ch.X(.5),ch.Y(1)-10,{size:10});halo(c,"constant power",ch.X(2),ch.Y(.5)-12,{size:10});
+    if($("#moShowOps").checked){c.save();ch.clip(c);c.fillStyle=hexA(col("--text"),.28);for(const[w,t]of ops)c.fillRect(ch.X(w)-1.5,ch.Y(t)-1.5,3,3);c.restore()}};
+  const showLoss=(t,w,label)=>{const L=motorLoss(t,w),pm=Math.abs(t)*w*ve.pmax,eta=motorEta(t,w);const items=[["Copper",L.cu],["Iron",L.fe],["Friction, windage",L.fw],["Constant",L.c0],["Inverter",L.inv]];const tot=items.reduce((a,b)=>a+b[1],0)*ve.pmax;
+    $("#moEta").textContent=pm>0?fmt(eta*100,1)+" %":"–";$("#moPt2").innerHTML=`${label} · ${fmt(pm,0)} kW ${t>=0?"at the shaft":"recovered at the shaft"} · ${fmt(tot,1)} kW lost`;
+    $("#moLoss").innerHTML=items.map(([n,v])=>`<div class="lr"><span>${n}</span><span class="lt"><i style="width:${tot?v*ve.pmax/tot*100:0}%"></i></span><span>${fmt(v*ve.pmax,2)} kW</span></div>`).join("")};
+  this._show=showLoss;
+  moCh.onmove=(x,y)=>{if(!moCh.inside(x,y)){S.hoverMotor=null;return}const w=moCh.ix(x),t=moCh.iy(y);if(Math.abs(t)>Math.min(1,1/Math.max(w,1e-6))){S.hoverMotor=null;moCh.hideTip();return}S.hoverMotor=[t,w];
+    showLoss(t,w,"cursor");$("#moLossSub").textContent="At the cursor.";moCh.showTip(x,y,`<b>${fmt(motorEta(t,w)*100,1)} %</b><br><span class="k">speed</span> ${fmt(w,2)} × base<br><span class="k">torque</span> ${fmt(t*100,0)} %<br><span class="k">power</span> ${fmt(Math.abs(t)*w*ve.pmax,0)} kW`)};
+  moCh.onleave=()=>{S.hoverMotor=null;this.tick()};
+  moCh.over=(c,ch)=>{if(!T)return;const i=P.i,t=T[pre+"t"][i],w=T[pre+"w"][i];const t0=T.t[i];c.save();for(let j=i;j>=0&&t0-T.t[j]<30;j--){const tj=T[pre+"t"][j];if(!tj)continue;c.fillStyle=hexA(col("--accent"),.5*(1-(t0-T.t[j])/30));c.beginPath();c.arc(ch.X(T[pre+"w"][j]),ch.Y(tj),3,0,7);c.fill()}c.restore();
+    if(t)liveDot(c,ch.X(w),ch.Y(t),col("--accent"))};
+  $("#moShowOps").onchange=()=>moCh.redraw();
+  const cb=$("#moCb");drawCbar(cb,x=>r(Math.pow(x,1.6)));
+  $("#moLegend").innerHTML=`<span><i style="background:var(--text);height:2px"></i>Torque limit</span><span><i class="dot" style="background:var(--text);opacity:.5"></i>${S.motorPt.toUpperCase()} operating points</span><span><i class="dot" style="background:var(--accent)"></i>Now</span>`;
+  const p=m?PT(m,S.motorPt):null;
+  $("#moStats").innerHTML=[[fmt(ve.pmax,0)+" kW","motor peak power"],[fmt(ve.n_gears,0)+" gears","e-drive gearbox"],[p?fmt(p.drive_eff_pct,1)+" %":"–","wheel ÷ motor electric energy"],[p?fmt(p.regen_pct,0)+" %":"–","of braking energy recovered"],
+    [fmt(eRegIn,1)+" kWh","recovered to the DC bus"],[fmt(md.edrive.regen_v_cut_kmh,0)+" km/h","regeneration stops below"]].map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
+  $("#moGears").textContent=`For the ${VNAME[veh]}, base speed is reached at ${ve.v_base_kmh.map((v,i)=>fmt(v,0)+" km/h in gear "+(i+1)).join(" and ")}; top speed ${fmt(ve.v_top_kmh,0)} km/h.`;
+  this.tick()},
+ tick(){if(!moCh)return;moCh.redrawOver();if(S.hoverMotor)return;const T=tr();if(!T||!this._show)return;const pre=S.motorPt==="bev"?"b_":"f_",t=T[pre+"t"][P.i],w=T[pre+"w"][P.i];
+  if(t){this._show(t,w,"replay");$("#moLossSub").textContent="At the replay position. Hover the map to explore."}else{$("#moEta").textContent="–";$("#moPt2").textContent="motor idle at this moment";$("#moLoss").innerHTML="";$("#moLossSub").textContent="Hover the map, or play the mission."}}};
+
+/* ============================================================ FUEL CELL */
+let fcCh=null,fcFl=null,fcSp=null;
+function fcEta(load,age){const f=S.model.fuel_cell,x=Math.max(load,f.load_frac[0]);const b=lerp(f.load_frac,f.eta_BOL,x),e=lerp(f.load_frac,f.eta_EOL,x);return b+(e-b)*age}
+VIEWS.fuelcell={render(){
+  const md=S.model,m=M(),T=tr();if(!md)return;const veh=vehOf(S.mission),ve=md.edrive.vehicles[veh],Pr=ve.fcev.fc_net_kW,f=md.fuel_cell,p=m?PT(m,"fcev"):null;
+  $("#fcTitle").innerHTML=p?`The ${fmt(Pr,0)} kW fuel cell runs at ${fmt(p.fc_load_pct,0)} % mean load: <em>${fmt(p.fc_eff_pct[0],1)} % efficient when new, ${fmt(p.fc_eff_pct[1],1)} % when aged.</em>`:"Fuel cell";
+  // histogram of time per load bin
+  const nb=20,hist=new Array(nb).fill(0);let tot=0;if(T){const dt=stepDt(T);for(let i=0;i<T.n;i++){const l=T.f_load[i];tot+=dt[i];if(l<=0)continue;hist[Math.min(nb-1,Math.floor(l*nb))]+=dt[i]}}
+  const off=tot?(tot-hist.reduce((a,b)=>a+b,0))/tot*100:0;
+  const hmax=Math.max(...hist,1e-9);
+  fcCh=new Chart("#fcChart",{h:380,m:{l:52,r:52,t:28,b:36}});fcCh.x0=0;fcCh.x1=Pr;fcCh.y0=30;fcCh.y1=70;
+  const xs=[...Array(101)].map((_,i)=>i/100);
+  fcCh.draw=(c,ch)=>{ch.axes(c,{yl:"system efficiency, %",xl:"net power, kW",y2l:"time",yf:v=>fmt(v,0)});
+    const hb=ch.ph*.38;c.save();c.fillStyle=col("--chart-context");for(let b=0;b<nb;b++){if(!hist[b])continue;const x0=ch.X(b/nb*Pr)+1,x1=ch.X((b+1)/nb*Pr)-1,h=hist[b]/hmax*hb;c.fillRect(x0,ch.H-ch.m.b-h,x1-x0,h)}
+    c.fillStyle=col("--text-3");c.textAlign="left";c.textBaseline="middle";c.fillText(fmt(hmax/tot*100,0)+" %",ch.W-ch.m.r+6,ch.H-ch.m.b-hb);c.fillText("0",ch.W-ch.m.r+6,ch.H-ch.m.b);c.restore();
+    const xb=xs.filter(x=>x>=f.load_frac[0]);
+    c.save();ch.clip(c);c.beginPath();xb.forEach((x,i)=>{const px=ch.X(x*Pr),py=ch.Y(fcEta(x,0)*100);i?c.lineTo(px,py):c.moveTo(px,py)});for(let i=xb.length-1;i>=0;i--)c.lineTo(ch.X(xb[i]*Pr),ch.Y(fcEta(xb[i],1)*100));c.closePath();c.fillStyle=hexA(ptCol("fcev"),.1);c.fill();c.restore();
+    ch.line(c,xb.map(x=>x*Pr),xb.map(x=>fcEta(x,1)*100),{color:col("--chart-muted"),w:1.5,dash:[5,4]});
+    ch.line(c,xb.map(x=>x*Pr),xb.map(x=>fcEta(x,0)*100),{color:ptCol("fcev"),w:2.5});
+    if(S.fcAge>0&&S.fcAge<1)ch.line(c,xb.map(x=>x*Pr),xb.map(x=>fcEta(x,S.fcAge)*100),{color:col("--accent"),w:2});
+    const xm=f.min_load_frac*Pr;c.save();c.setLineDash([3,3]);c.strokeStyle=col("--chart-muted");c.beginPath();c.moveTo(ch.X(xm),ch.m.t);c.lineTo(ch.X(xm),ch.H-ch.m.b);c.stroke();c.restore();
+    halo(c,"minimum load",ch.X(xm)+4,ch.m.t+8,{align:"left",size:10});
+    const ib=f.eta_BOL.indexOf(Math.max(...f.eta_BOL));halo(c,`peak ${fmt(f.eta_BOL[ib]*100,1)} % at ${fmt(f.load_frac[ib]*100,0)} % load`,ch.X(f.load_frac[ib]*Pr)+6,ch.Y(f.eta_BOL[ib]*100)-12,{align:"left",bold:true,color:col("--text")});
+    if(off>0)halo(c,`fuel cell off ${fmt(off,0)} % of the time`,ch.W-ch.m.r-4,ch.m.t+8,{align:"right",size:11})};
+  fcCh.over=(c,ch)=>{if(ch.mx!=null&&ch.inside(ch.mx,ch.my)){const Pk=clamp(ch.ix(ch.mx),0,Pr),l=Pk/Pr,x=ch.X(Pk);c.strokeStyle=col("--chart-muted");c.setLineDash([3,3]);c.beginPath();c.moveTo(x,ch.m.t);c.lineTo(x,ch.H-ch.m.b);c.stroke();c.setLineDash([]);
+      const eb=fcEta(l,0),ee=fcEta(l,1),ea=fcEta(l,S.fcAge);ch.showTip(x,ch.my,`<b>${fmt(Pk,0)} kW · ${fmt(l*100,0)} % load</b><br><span class="k">new</span> ${fmt(eb*100,1)} % <span class="k">aged</span> ${fmt(ee*100,1)} %<br><span class="k">H₂ at selected age</span> ${fmt(Pk/ea/33.333,2)} kg/h<br><span class="k">heat to remove</span> ${fmt(Pk/ea-Pk,0)} kW`)}
+    if(T){const Pk=T.f_Pfc[P.i];if(Pk>0)liveDot(c,ch.X(Pk),ch.Y(fcEta(Pk/Pr,S.fcAge)*100),col("--accent"))}};
+  // flow chart
+  fcFl=new Chart("#fcFlow",{h:220,m:{l:44,r:14,t:24,b:32}});fcFl.x0=0;fcFl.x1=Pr;fcFl.y0=0;fcFl.y1=Math.ceil(Pr/fcEta(1,1)/33.333/2)*2;
+  const peak=Math.max(...f.eta_BOL);
+  fcFl.draw=(c,ch)=>{ch.axes(c,{yl:"kg/h",xl:"kW",ny:4,nx:4});ch.line(c,[0,Pr],[0,Pr/peak/33.333],{color:col("--chart-muted"),w:1.2,dash:[4,4]});
+    const xb=xs.filter(x=>x>=.02);ch.line(c,xb.map(x=>x*Pr),xb.map(x=>x*Pr/fcEta(x,1)/33.333),{color:col("--chart-context"),w:1.5});
+    ch.line(c,xb.map(x=>x*Pr),xb.map(x=>x*Pr/fcEta(x,S.fcAge)/33.333),{color:S.fcAge>0?col("--accent"):ptCol("fcev"),w:2})};
+  fcFl.over=(c,ch)=>{if(T){const Pk=T.f_Pfc[P.i];if(Pk>0)liveDot(c,ch.X(Pk),ch.Y(Pk/fcEta(Pk/Pr,S.fcAge)/33.333),col("--accent"))}};
+  // power split
+  fcSp=new Chart("#fcSplit",{h:240,m:{l:52,r:18,t:24,b:34}});
+  const pmax=T?Math.max(...T.f_Pm.map((v,i)=>v+ve.aux_kW),...T.f_Pfc):100,pmin=T?Math.min(...T.f_Pb,0):-50;fcSp.y0=Math.floor(pmin/50)*50;fcSp.y1=Math.ceil(pmax/50)*50;
+  fcSp.draw=(c,ch)=>{if(!T)return;const i=P.i,t0=T.t[i];ch.x0=Math.max(0,t0-300);ch.x1=ch.x0+600;
+    ch.axes(c,{yl:"kW",xl:"minutes",zero:true,ny:4,xt:ticks(ch.x0/60,ch.x1/60,6).map(v=>v*60),xf:v=>fmt(v/60,0)});
+    const a=bisect(T.t,ch.x0),b=Math.min(T.n-1,bisect(T.t,ch.x1)+1);const ts=[],dm=[],fc=[],bt=[];
+    for(let j=a;j<=b;j++){ts.push(T.t[j]);dm.push(T.f_Pm[j]+ve.aux_kW);fc.push(T.f_Pfc[j]);bt.push(T.f_Pb[j]);if(T.dwell[j]>0&&j<b){ts.push(T.t[j]+T.dwell[j]);dm.push(ve.aux_kW);fc.push(T.f_Pfc[j]);bt.push(ve.aux_kW-T.f_Pfc[j]*.97)}}
+    ch.line(c,ts,fc,{fill:hexA(ptCol("fcev"),.18),base:0});ch.line(c,ts,fc,{color:ptCol("fcev"),w:2});
+    ch.line(c,ts,dm,{color:col("--chart-muted"),w:1.2});ch.line(c,ts,bt,{color:ptCol("bev"),w:1.5})};
+  fcSp.over=(c,ch)=>{if(!T)return;const x=ch.X(T.t[P.i]);c.strokeStyle=col("--accent");c.lineWidth=1.5;c.beginPath();c.moveTo(x,ch.m.t);c.lineTo(x,ch.H-ch.m.b);c.stroke()};
+  this._lastWin=-1;
+  const age=$("#fcAge");age.value=Math.round(S.fcAge*100);const lab=()=>$("#fcAgeLbl").textContent=S.fcAge===0?"new":S.fcAge===1?"end of life":fmt(S.fcAge*100,0)+" % of the way to end of life";lab();
+  age.oninput=()=>{S.fcAge=age.value/100;lab();fcCh.redraw();fcFl.redraw();this.stats()};
+  this.stats();this.tick()},
+ stats(){const m=M(),p=m?PT(m,"fcev"):null,veh=vehOf(S.mission),ve=S.model.edrive.vehicles[veh];
+  const h2=p?p.range[0]+(p.range[1]-p.range[0])*S.fcAge:null;
+  $("#fcStats").innerHTML=[[p?fmt(h2,2):"–",`kg H₂/100 km at the selected age${S.fcAge>0&&S.fcAge<1?" (between the new and aged runs)":""}`],[p?fmt(p.fc_load_pct,0)+" %":"–","mean load"],
+    [p?fmt(p.fc_eff_pct[0],1)+" / "+fmt(p.fc_eff_pct[1],1):"–","mean system efficiency, new / aged, %"],[p?fmt(p.fc_starts,0):"–","fuel cell starts"],
+    [fmt(ve.fcev.battery_kWh,0)+" kWh","buffer battery"],[p?"+"+fmt(p.extra,0)+" kg":"–","extra mass vs diesel"]].map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("")},
+ tick(){if(!fcCh)return;fcCh.redrawOver();fcFl.redrawOver();fcSp.redraw()}};
+
+/* ============================================================ BATTERY */
+let baSoc=null,baHi=null;
+function ringSvg(){const s=$("#baRing");const r=96,C=2*Math.PI*r;s.innerHTML=`<circle cx="110" cy="110" r="${r}" fill="none" stroke="var(--fill)" stroke-width="14"/>
+  <circle id="baWin" cx="110" cy="110" r="${r}" fill="none" stroke="var(--grid)" stroke-width="14"/>
+  <circle id="baArc" cx="110" cy="110" r="${r}" fill="none" stroke="var(--accent)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 ${C}" style="transition:stroke-dasharray .25s linear"/>`;s._C=C}
+VIEWS.battery={render(){
+  const md=S.model,m=M(),T=tr();if(!md||!T||!m){return}
+  const veh=vehOf(S.mission),ve=md.edrive.vehicles[veh];
+  seg($("#baPt"),[{k:"bev",t:"BEV traction battery"},{k:"fcev",t:"FCEV buffer battery"}],S.battPt,v=>{S.battPt=v;this.render()});
+  const bev=S.battPt==="bev",pre=bev?"b_":"f_",cap=bev?ve.bev.battery_kWh:ve.fcev.battery_kWh,p=PT(m,S.battPt);
+  const socs=T[pre+"soc"],smin=Math.min(...socs),smax=Math.max(...socs);
+  $("#baTitle").innerHTML=bev?`The ${fmt(cap,0)} kWh battery ends the ${MLONG[m.tag]} at ${fmt(p.soc[1]*100,0)} % charge, <em>after using ${fmt(p.used_pct,0)} % of its capacity.</em>`
+    :`The ${fmt(cap,0)} kWh buffer battery swings between ${fmt(smin*100,0)} and ${fmt(smax*100,0)} % charge <em>while the fuel cell holds it near ${fmt(md.fuel_cell.ems.soc_ref*100,0)} %.</em>`;
+  $("#baLede").textContent=bev?"The battery-electric vehicle takes all its energy from the traction battery: motor, auxiliaries and losses, minus what regenerative braking puts back. Internal losses grow with the square of the power.":"In the fuel cell vehicle the small buffer battery covers the power peaks and absorbs regenerative braking. The fuel cell's controller adds power when the charge falls below the target and backs off when it rises.";
+  ringSvg();
+  const lo=bev?ve.bev.soc_min:md.fuel_cell.ems.soc_min,hi=bev?ve.bev.soc_start:md.fuel_cell.ems.soc_max,C=$("#baRing")._C;
+  $("#baWin").setAttribute("stroke-dasharray",`0 ${lo*C} ${(hi-lo)*C} ${C}`);
+  baSoc=new Chart("#baSocChart",{h:300,m:{l:44,r:18,t:28,b:34}});baSoc.x0=0;baSoc.x1=T.s[T.n-1];baSoc.y0=0;baSoc.y1=100;
+  baSoc.draw=(c,ch)=>{ch.axes(c,{yl:"%",xl:"km",ny:5});
+    for(const v of[lo,hi]){c.save();c.setLineDash([2,4]);c.strokeStyle=col("--chart-muted");const y=ch.Y(v*100);c.beginPath();c.moveTo(ch.m.l,y);c.lineTo(ch.W-ch.m.r,y);c.stroke();c.restore()}
+    const other=bev?"f_soc":"b_soc";ch.line(c,T.s,T[other].map(v=>v*100),{color:col("--chart-context"),w:1.5});
+    ch.line(c,T.s,socs.map(v=>v*100),{color:ptCol(S.battPt),w:2.2});
+    const iL=T.n-1;halo(c,bev?"BEV":"FCEV buffer",ch.X(T.s[iL])-4,ch.Y(socs[iL]*100)-12,{align:"right",bold:true,color:ptCol(S.battPt)});
+    halo(c,bev?"FCEV buffer":"BEV",ch.X(T.s[iL])-4,ch.Y(T[other][iL]*100)+12,{align:"right",color:col("--text-3")})};
+  baSoc.over=(c,ch)=>{const i=P.i,x=ch.X(T.s[i]);c.strokeStyle=col("--accent");c.lineWidth=1.5;c.beginPath();c.moveTo(x,ch.m.t);c.lineTo(x,ch.H-ch.m.b);c.stroke();liveDot(c,x,ch.Y(socs[i]*100),col("--accent"));
+    if(ch.mx!=null&&ch.inside(ch.mx,ch.my)){const j=bisect(T.s,ch.ix(ch.mx));ch.showTip(ch.mx,ch.my,`<b>km ${fmt(T.s[j],1)}</b><br><span class="k">BEV</span> ${fmt(T.b_soc[j]*100,1)} %<br><span class="k">FCEV buffer</span> ${fmt(T.f_soc[j]*100,1)} %`)}};
+  baSoc.onclick=x=>{if(baSoc.inside(x,baSoc.m.t+1))seekIndex(bisect(T.s,baSoc.ix(x)))};
+  // C-rate histogram
+  const dt=stepDt(T),dr=T._dr,edges=[];const cmax=bev?1.2:Math.max(2,Math.ceil(Math.max(...T[pre+"Pb"].map(Math.abs))/cap));const nb=24;for(let b=0;b<=nb;b++)edges.push(-cmax+2*cmax*b/nb);
+  const h=new Array(nb).fill(0);let tt=0;for(let i=0;i<T.n;i++){if(!dr[i])continue;const cr=T[pre+"Pb"][i]/cap;const b=clamp(Math.floor((cr+cmax)/(2*cmax)*nb),0,nb-1);h[b]+=dr[i];tt+=dr[i]}
+  const hm=Math.max(...h)/tt*100;
+  baHi=new Chart("#baHist",{h:240,m:{l:40,r:14,t:24,b:34}});baHi.x0=-cmax;baHi.x1=cmax;baHi.y0=0;baHi.y1=Math.ceil(hm/5)*5||5;
+  baHi.draw=(c,ch)=>{ch.axes(c,{yl:"% of time",xl:"C-rate",ny:4,xf:v=>fmt(v,cmax<2?1:0)});for(let b=0;b<nb;b++){const v=h[b]/tt*100;if(!v)continue;const x0=ch.X(edges[b])+1,x1=ch.X(edges[b+1])-1;c.fillStyle=edges[b]<0?col("--chart-muted"):ptCol(S.battPt);c.beginPath();c.roundRect?c.roundRect(x0,ch.Y(v),x1-x0,ch.Y(0)-ch.Y(v),[3,3,0,0]):c.rect(x0,ch.Y(v),x1-x0,ch.Y(0)-ch.Y(v));c.fill()}
+    halo(c,"charging",ch.X(-cmax/2),ch.m.t+4,{color:col("--text-2")});halo(c,"discharging",ch.X(cmax/2),ch.m.t+4,{color:col("--text-2")});
+    c.strokeStyle=col("--chart-muted");c.beginPath();c.moveTo(ch.X(0)+.5,ch.m.t);c.lineTo(ch.X(0)+.5,ch.H-ch.m.b);c.stroke()};
+  baHi.over=(c,ch)=>{const cr=T[pre+"Pb"][P.i]/cap;liveDot(c,ch.X(clamp(cr,-cmax,cmax)),ch.Y(0)-2,col("--accent"))};
+  let eChg=0,eDis=0;for(let i=0;i<T.n;i++){const pb=T[pre+"Pb"][i]*dr[i]/3600;if(pb>0)eDis+=pb;else eChg-=pb}
+  $("#baStats").innerHTML=(bev?[[fmt(p.soc[0]*100,0)+" → "+fmt(p.soc[1]*100,0)+" %","charge, start → end"],[fmt(p.used_pct,0)+" %","of the capacity used"],[fmt(p.value,0)+" kWh","per 100 km from the battery"],[fmt(p.grid_kwh_km*100,0)+" kWh","per 100 km from the grid"],[fmt(p.regen_pct,0)+" %","of braking energy recovered"],[fmt(eChg,1)+" kWh","charged back while driving"],["+"+fmt(p.extra,0)+" kg","extra mass vs diesel"],[p.deficit?p.deficit+" steps":"none","short of power"]]
+    :[[fmt(smin*100,0)+"–"+fmt(smax*100,0)+" %","charge range on the mission"],[fmt(p.soc[1]*100,0)+" %","charge at the end (start "+fmt(p.soc[0]*100,0)+" %)"],[fmt(eDis,1)+" kWh","delivered by the buffer"],[fmt(eChg,1)+" kWh","charged (regeneration + fuel cell)"],[fmt(p.regen_pct,0)+" %","of braking energy recovered"],[fmt(ve.fcev.C_discharge,1)+" C / "+fmt(ve.fcev.C_charge,1)+" C","discharge / charge limit"]])
+    .map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
+  $("#baNote").innerHTML=bev?`Battery ${fmt(cap,0)} kWh, usable down to ${fmt(lo*100,0)} %. Loss model: internal resistance with constant voltage, ${fmt(md.battery.loss_at_1C*100,0)} % loss at 1C (assumption). Grid energy includes the ${fmt(md.battery.charger_efficiency*100,0)} % charger efficiency (Skogforsk 2023).`
+    :`The hydrogen result is corrected for the difference between the start and end charge of the buffer, so it is comparable across missions. Charge window ${fmt(lo*100,0)}–${fmt(hi*100,0)} %, target ${fmt(md.fuel_cell.ems.soc_ref*100,0)} %.`;
+  this.tick()},
+ tick(){const T=tr();if(!T||!baSoc||!S.model)return;const bev=S.battPt==="bev",pre=bev?"b_":"f_",veh=vehOf(S.mission),ve=S.model.edrive.vehicles[veh],cap=bev?ve.bev.battery_kWh:ve.fcev.battery_kWh;
+  const soc=T[pre+"soc"][P.i],pb=T[pre+"Pb"][P.i],C=$("#baRing")._C;if(!C)return;$("#baArc").setAttribute("stroke-dasharray",`${soc*C} ${C}`);$("#baArc").setAttribute("stroke",ptCol(S.battPt));
+  $("#baSoc").textContent=fmt(soc*100,1);
+  $("#baLive").innerHTML=[[fmt(pb,0)+" kW",pb<0?"charging":"discharging"],[fmt(pb/cap,2)+" C","C-rate"],[fmt(soc*cap,0)+" kWh","energy stored"],[bev?fmt(T.b_cum[P.i],1)+" kWh":fmt(T.f_Pfc[P.i],0)+" kW",bev?"used so far":"fuel cell now"]].map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
+  baSoc.redrawOver();baHi.redrawOver()}};
+
+/* ============================================================ COMPARE */
+let coCh=null;
+VIEWS.compare={render(){
+  const d=S.data;if(!d||!d.ok){$("#coTable").innerHTML="";return}
+  const ms=d.missions,winners=ms.map(m=>m.powertrains.reduce((a,b)=>b.kwh_km<a.kwh_km?b:a).key);
+  const allBev=winners.every(w=>w==="bev");
+  const fcRank=ms.every(m=>{const s=[...m.powertrains].sort((a,b)=>a.kwh_km-b.kwh_km);return s[1].key==="fcev"});
+  $("#coTitle").innerHTML=allBev?`Battery-electric uses the least energy on all ${ms.length} missions${fcRank?", <em>the fuel cell comes second every time.</em>":"."}`:"Energy per km on every mission";
+  coCh=new Chart("#coChart",{h:Math.max(340,ms.length*96),m:{l:120,r:60,t:16,b:44}});
+  const vmax=Math.max(...ms.flatMap(m=>m.powertrains.map(p=>p.kwh_km)))*1.08;coCh.x0=0;coCh.x1=vmax;coCh.y0=0;coCh.y1=1;
+  coCh.draw=(c,ch)=>{ch.axes(c,{yt:[],xl:"kWh/km",xgrid:true,grid:false});const gh=ch.ph/ms.length,bh=Math.min(12,(gh-18)/5);
+    ms.forEach((m,g)=>{const y0=ch.m.t+g*gh+8;c.fillStyle=col("--text");c.font="600 13px "+FONT;c.textAlign="right";c.textBaseline="middle";c.fillText(MSHORT[m.tag],ch.m.l-14,y0+bh*2.5);
+      m.powertrains.forEach((p,k)=>{const y=y0+k*(bh+2),w=ch.X(p.kwh_km)-ch.m.l;c.fillStyle=ptCol(p.key);c.beginPath();c.roundRect?c.roundRect(ch.m.l,y,w,bh,3):c.rect(ch.m.l,y,w,bh);c.fill();
+        c.font="11px "+FONT;c.fillStyle=col("--text-2");c.textAlign="left";c.fillText(fmt(p.kwh_km,2),ch.m.l+w+6,y+bh/2)})})};
+  $("#coLegend").innerHTML=PTS.map(p=>`<span><i class="dot" style="background:${ptCol(p.key)}"></i>${p.name}</span>`).join("");
+  $("#coTable").innerHTML=`<tr><th>Mission</th><th>km</th><th>Diesel, l/100 km</th><th>HVO100, l/100 km</th><th>H2-ICE, kg/100 km</th><th>FCEV, kg/100 km</th><th>BEV, kWh/100 km</th></tr>`+
+    ms.map(m=>{const g=k=>PT(m,k);return`<tr><td>${MSHORT[m.tag]}</td><td>${fmt(m.km,1)}</td><td>${fmt(g("diesel").value,1)}</td><td>${fmt(g("hvo100").value,1)}</td><td>${fmt(g("h2ice").value,2)}</td><td>${fmt(g("fcev").range[0],2)} / ${fmt(g("fcev").range[1],2)}</td><td>${fmt(g("bev").value,0)} / ${fmt(g("bev").grid_kwh_km*100,0)}</td></tr>`}).join("");
+  $("#coFiles").innerHTML=d.excel.length?d.excel.map(f=>`<a href="/files/${f}">${f}</a>`).join(""):'<span class="note">No files yet.</span>';
+  $("#coFigs").innerHTML=d.figures.length?d.figures.map(f=>`<a href="/files/${f}" target="_blank">${f}</a>`).join(""):'<span class="note">No figures yet.</span>';
+}};
+
+/* ============================================================ RUN & INPUTS */
+const RUNNAMES={"missions.py":"Driving cycles","powertrain.py":"Diesel, HVO100, H2-ICE","electric.py":"BEV and FCEV","plot_operating_points.py":"Engine figure","export_excel.py":"Excel workbooks","cycle_sensitivity.py":"Bus cycle sensitivity"};
+const RUNORDER=Object.keys(RUNNAMES);
+const RUNOPT={keep:false,map:"inputs"};let RST=null,INP=null,EDIT={},pollT=null;
+VIEWS.run={render(){
+  seg($("#rCycles"),[{k:"rebuild",t:"Rebuild"},{k:"keep",t:"Keep (faster)"}],RUNOPT.keep?"keep":"rebuild",v=>RUNOPT.keep=v==="keep");
+  seg($("#rMap"),[{k:"inputs",t:"As in inputs"},{k:"measured",t:"Measured"},{k:"model",t:"Semi-empirical"}],RUNOPT.map,v=>RUNOPT.map=v);
+  renderRun();loadInputs()}};
+function renderRun(){const s=RST||{};const steps=s.steps===5||(!s.steps&&RUNOPT.keep)?RUNORDER.slice(1):RUNORDER;
+  $("#runSteps").innerHTML=steps.map((n,i)=>{const k=i+1;let c="";if(s.running){if(k<s.step)c="done";else if(k===s.step)c="now"}else if(s.returncode===0&&s.finished)c="done";return`<li class="${c}"><span class="ic"></span><span>${RUNNAMES[n]}</span><small>${n}</small></li>`}).join("");
+  const frac=s.running?Math.max(0,(s.step-1)/(s.steps||6)):s.returncode===0&&s.finished?1:0;$("#runBar").style.width=frac*100+"%";
+  $("#runBtn").disabled=!!s.running;$("#runBtn").textContent=s.running?"Running…":"Run model";
+  $("#runMsg").textContent=s.running?`Running for ${fmtT(Date.now()/1000-s.started)}…`:s.returncode===0&&s.finished?`Done in ${Math.round(s.finished-s.started)} s. All views are up to date.`:s.returncode?"The run failed: open the log. A missing comma in vehicles.json is the usual cause.":"About one minute with the cycles rebuilt.";
+  if(s.log&&s.log.length){$("#runLog").textContent=s.log.join("\n");$("#runLog").scrollTop=1e9;if(s.returncode)$("#runLogWrap").open=true}
+  document.querySelector("nav.top").classList.toggle("running",!!s.running);$("#navRun .t").textContent=s.running?`Running ${s.step||0}/${s.steps||6}`:"Run model";$("#navRun").disabled=false}
+async function startRun(){const r=await api("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keep_cycles:RUNOPT.keep,engine_map:RUNOPT.map==="inputs"?null:RUNOPT.map})});
+  if(r.started===false&&!RST?.running){} poll()}
+async function poll(){clearTimeout(pollT);const s=await api("/api/status");const was=RST&&RST.running;RST=s;renderRun();
+  if(s.running)pollT=setTimeout(poll,700);else if(was&&s.returncode===0){await loadAll();if(S.view==="run")loadInputs()}}
+$("#runBtn").onclick=startRun;$("#navRun").onclick=()=>{if(S.view!=="run")location.hash="run";else if(!RST||!RST.running)startRun()};
+async function loadInputs(){INP=await api("/api/inputs");EDIT={};renderInputs()}
+let INTAB=0;
+function renderInputs(){if(!INP||!INP.groups){$("#inputs").innerHTML='<div class="note">Inputs not available.</div>';return}
+  INTAB=Math.min(INTAB,INP.groups.length-1);
+  seg($("#inTabs"),INP.groups.map((g,i)=>({k:i,t:g.title.replace(" and batteries","")+(g.items.some(it=>it.path in EDIT)?" •":"")})),INTAB,v=>{INTAB=+v;renderInputs()});
+  $("#inputs").innerHTML=[INP.groups[INTAB]].map((g,gi)=>`<div class="igroup"><p class="sub">${g.note}</p>${g.items.map(it=>{const ch=it.original!=null&&it.original!==it.value;const val=it.path in EDIT?EDIT[it.path]:it.value;
+    const inp=it.kind==="select"?`<select data-p="${it.path}">${it.options.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")}</select>`:`<input type="number" data-p="${it.path}" value="${val}" ${it.step?`step="${it.step}"`:""} ${it.min!=null?`min="${it.min}"`:""} ${it.max!=null?`max="${it.max}"`:""}>`;
+    return`<div class="irow ${ch?"changed":""} ${it.path in EDIT?"dirty":""}" data-p="${it.path}"><label>${it.label}</label>${inp}<span class="u">${it.unit||""}</span><span class="o">${ch?`was ${it.original} <button data-reset="${it.path}">reset</button>`:""}</span></div>`}).join("")}</div>`).join("");
+  $("#inputs").oninput=e=>{const el=e.target.closest("[data-p]");if(!el||!el.dataset.p||el.tagName==="DIV")return;const it=findInput(el.dataset.p);const v=it.kind==="select"?el.value:el.value;
+    if(String(v)===String(it.value))delete EDIT[el.dataset.p];else EDIT[el.dataset.p]=v;el.closest(".irow").classList.toggle("dirty",el.dataset.p in EDIT);updSave()};
+  $("#inputs").onclick=e=>{const b=e.target.closest("[data-reset]");if(!b)return;const it=findInput(b.dataset.reset);const el=$(`#inputs [data-p="${b.dataset.reset}"]:not(.irow)`);el.value=it.original;EDIT[b.dataset.reset]=it.original;el.closest(".irow").classList.add("dirty");updSave()};
+  $("#inRestore").style.display=INP.has_backup?"":"none";updSave()}
+function findInput(p){for(const g of INP.groups)for(const it of g.items)if(it.path===p)return it}
+function updSave(){const n=Object.keys(EDIT).length;$("#inMsg").textContent=n?`${n} unsaved change${n>1?"s":""}.`:(INP&&INP.has_backup?"vehicles.json differs from the original (marked rows).":"No changes.");
+  ["#inSave","#inSaveRun","#inDiscard"].forEach(s=>$(s).disabled=!n)}
+async function saveInputs(run){const r=await api("/api/inputs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({changes:EDIT})});
+  $("#inMsg").textContent=r.message||"";if(r.ok){await loadInputs();$("#inMsg").textContent=r.message;S.model=null;const m=await api("/api/model");S.model=m&&m.maps?m:S.model;if(run)startRun()}}
+$("#inSave").onclick=()=>saveInputs(false);$("#inSaveRun").onclick=()=>saveInputs(true);$("#inDiscard").onclick=()=>{EDIT={};renderInputs()};
+$("#inRestore").onclick=async()=>{const r=await api("/api/inputs/restore",{method:"POST"});await loadInputs();$("#inMsg").textContent=r.message+" Run the model to update the results."};
+
+/* ============================================================ PLAYER */
+const RATES=[10,30,100,300];
+seg($("#rateSeg"),RATES.map(r=>({k:r,t:"×"+r})),P.rate,v=>{P.rate=+v;store.set("rate",P.rate)});
+function updPlayIcon(){$("#playIc").innerHTML=P.playing?'<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/>':'<path d="M4 2.5v11l9.5-5.5z" fill="currentColor"/>';$("#playBtn").setAttribute("aria-label",P.playing?"Pause":"Play")}
+function togglePlay(){const T=tr();if(!T)return;if(!P.playing&&P.i>=T.n-1){P.i=0;P.simT=0}P.playing=!P.playing;updPlayIcon();if(P.playing){P.last=performance.now();requestAnimationFrame(loop)}}
+function loop(ts){if(!P.playing)return;const T=tr();if(!T){P.playing=false;updPlayIcon();return}const dt=Math.min(.1,(ts-P.last)/1000);P.last=ts;P.simT+=dt*P.rate;
+  const end=T.t[T.n-1];if(P.simT>=end){P.simT=end;P.playing=false;updPlayIcon()}P.i=bisect(T.t,P.simT);updateLive();if(P.playing)requestAnimationFrame(loop)}
+function seekIndex(i){const T=tr();if(!T)return;P.i=clamp(i,0,T.n-1);P.simT=T.t[P.i];updateLive()}
+$("#playBtn").onclick=togglePlay;
+document.addEventListener("keydown",e=>{if(e.target.matches("input,select,textarea"))return;const T=tr();if(!T)return;
+  if(e.code==="Space"){e.preventDefault();togglePlay()}else if(e.key==="ArrowRight"){seekIndex(bisect(T.t,P.simT+30))}else if(e.key==="ArrowLeft"){seekIndex(bisect(T.t,P.simT-30))}});
+let scrubDrag=false;const scrub=$("#scrub");
+const scrubTo=e=>{const T=tr();if(!T)return;const r=scrub.getBoundingClientRect();const f=clamp((e.clientX-r.left)/r.width,0,1);seekIndex(bisect(T.t,f*T.t[T.n-1]))};
+scrub.addEventListener("mousedown",e=>{scrubDrag=true;scrubTo(e)});window.addEventListener("mousemove",e=>{if(scrubDrag)scrubTo(e)});window.addEventListener("mouseup",()=>scrubDrag=false);
+scrub.addEventListener("touchmove",e=>{scrubTo(e.touches[0])},{passive:true});scrub.addEventListener("touchstart",e=>{scrubTo(e.touches[0])},{passive:true});
+let scrubBase=null;
+function drawScrub(){const cv=$("#scrubC"),w=scrub.clientWidth,h=scrub.clientHeight,d=devicePixelRatio||1;if(!w)return;cv.width=w*d;cv.height=h*d;const c=cv.getContext("2d");c.setTransform(d,0,0,d,0,0);CS=null;
+  const T=tr();c.clearRect(0,0,w,h);if(!T){scrubBase=null;return}const end=T.t[T.n-1],vmax=Math.max(...T.v,1);
+  const off=document.createElement("canvas");off.width=w*d;off.height=h*d;const o=off.getContext("2d");o.setTransform(d,0,0,d,0,0);
+  o.beginPath();o.moveTo(0,h-6);for(let i=0;i<T.n;i+=2)o.lineTo(T.t[i]/end*w,h-6-T.v[i]/vmax*(h-14));o.lineTo(w,h-6);o.closePath();o.fillStyle=col("--chart-context");o.fill();
+  scrubBase=off;paintScrub()}
+function paintScrub(){const cv=$("#scrubC"),T=tr();if(!scrubBase||!T)return;const c=cv.getContext("2d"),w=scrub.clientWidth,h=scrub.clientHeight,d=devicePixelRatio||1;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.drawImage(scrubBase,0,0);
+  const x=T.t[P.i]/T.t[T.n-1]*w;c.save();c.setTransform(d,0,0,d,0,0);c.beginPath();c.rect(0,0,x,h);c.clip();c.globalCompositeOperation="source-atop";c.fillStyle=col("--accent");c.fillRect(0,0,x,h);c.restore();
+  c.setTransform(d,0,0,d,0,0);c.fillStyle=col("--accent");c.fillRect(x-1,2,2,h-4);c.beginPath();c.arc(x,h-6,5,0,7);c.fill()}
+window.addEventListener("resize",()=>drawScrub());
+function updateLive(){const T=tr();if(!T){$("#pT").textContent="–";$("#pTot").textContent="no results";return}const i=P.i;
+  $("#pT").textContent=fmtT(T.t[i]);$("#pTot").textContent="of "+fmtT(T.t[T.n-1]);
+  $("#pRead").innerHTML=`<b>km ${fmt(T.s[i],1)} · ${fmt(T.v[i],0)} km/h</b><br>grade ${fmt(T.grade[i],1)} % · ${T.dwell[i]>0?"stop "+fmt(T.dwell[i],0)+" s":fmt(T.P_wheel[i],0)+" kW at wheels"}`;
+  paintScrub();const V=VIEWS[S.view];if(V&&V.tick)try{V.tick()}catch(e){console.error(e)}}
+
+/* ============================================================ theme */
+const THEMES=["auto","light","dark"];let theme=store.get("theme","auto");
+function applyTheme(){if(theme==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=theme;$("#theme").title="Appearance: "+theme;CS=null;
+  setTimeout(()=>{renderView();drawScrub()},30)}
+$("#theme").onclick=()=>{theme=THEMES[(THEMES.indexOf(theme)+1)%3];store.set("theme",theme);applyTheme()};
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(theme==="auto"){CS=null;renderView();drawScrub()}});
+if(theme!=="auto")document.documentElement.dataset.theme=theme;
+
+/* ============================================================ start */
+(async()=>{go(location.hash.slice(1)||"overview");await loadAll();poll()})();
 </script>
 </body>
 </html>

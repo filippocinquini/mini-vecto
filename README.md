@@ -193,10 +193,26 @@ The model design, the choice of sources and the checks are mine; the code was wr
 
 Code released under the [MIT License](LICENSE). Numbers taken from the cited sources remain the property of their authors.
 
-## Dashboard (for presentations)
+## Dashboard
 
 `python3 dashboard.py` (or double-click `OPEN_DASHBOARD_mac.command` / `OPEN_DASHBOARD_windows.bat`) opens a local page at
-http://127.0.0.1:8765 that explains the model step by step with the real mission data, runs the whole chain in the
-background with the **Run model** button (progress shown live) and shows the results: energy per km, consumption,
-extra mass, payload, friction braking, power deficits, speed and altitude profiles, Excel files and figures.
-Standard library only; the server listens on your computer only and can just read results and launch `run_all.py`.
+http://127.0.0.1:8765. Pick a mission at the top; every view follows it.
+
+| View | What it shows |
+|---|---|
+| Overview | Energy per km of the five powertrains, mission figures, share of the energy that becomes traction, extra mass and friction braking |
+| Mission | Live replay of the mission: speedometer, grade, and one instrument per powertrain (gear, rpm, torque, motor and battery power, fuel cell load, state of charge, fuel used so far); speed, altitude and wheel power along the route, with zoom or follow mode |
+| Engine map | Interactive measured or semi-empirical map, coloured by efficiency, BSFC or engine-out NOx, with full-load curve, constant-power lines and every operating point of the mission; time in each gear |
+| E-motor | Efficiency map of motor + inverter (motoring and regenerating) from the loss model, with operating points and the loss split (copper, iron, friction, inverter) at any point |
+| Fuel cell | System efficiency against net power for a new and an aged stack (age slider), time spent at each load, hydrogen flow, and the power split between fuel cell and buffer battery |
+| Battery | State-of-charge gauge and trace for the BEV battery and the FCEV buffer, C-rate distribution, regeneration |
+| Compare | All missions side by side, native units, Excel workbooks and figures |
+| Run & inputs | Edit the main values of `vehicles.json`, run `run_all.py` in the background with live progress; the dashboard refreshes when the run ends |
+
+The player bar at the bottom drives every view: play/pause (space bar), jump ±30 s (arrow keys), drag the scrubber, choose the
+replay speed. Light and dark appearance follow the system (button in the top bar to force one).
+
+Editing inputs: saving writes `vehicles.json` and, on the first save, keeps the original as `vehicles.json.bak`
+(**Restore original** puts it back). Only the fields listed in the dashboard can be changed there; everything else stays in
+`vehicles.json` and `missions.py`. The server uses the Python standard library only, listens on your computer only, and can
+just read the results, write those fields and launch `run_all.py`.

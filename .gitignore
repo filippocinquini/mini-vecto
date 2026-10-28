@@ -16,6 +16,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# dashboard backup of the inputs
+vehicles.json.bak
+
 # Excel lock files
 ~$*.xlsx
 
